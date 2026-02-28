@@ -2393,6 +2393,7 @@ button.primary.loading .btn-spinner {
     background: var(--color-surface);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-lg);
 }
 
 #summary-container > .summary.summary--collapsed > .summary-header {
@@ -2412,6 +2413,33 @@ button.primary.loading .btn-spinner {
     margin-bottom: 0;
     padding: 0;
     transition: max-height var(--transition-med) ease-out, opacity var(--transition-med);
+}
+
+/* Summary header layout */
+.summary-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    flex: 1;
+    min-width: 0;
+}
+
+.summary-compact-values {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-sm);
+    flex-wrap: wrap;
+}
+
+.summary-compact-values .compact-val {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.summary-compact-values .compact-sep {
+    color: var(--color-text-muted);
+    opacity: 0.4;
 }
 
 .summary-body {

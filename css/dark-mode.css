@@ -485,6 +485,10 @@
     box-shadow: var(--shadow-sm);
 }
 
+[data-theme="dark"] .summary-compact-values .compact-sep {
+    color: var(--color-text-muted);
+}
+
 [data-theme="dark"] .summary-ratio {
     background: var(--color-bg);
     color: var(--color-text-muted);

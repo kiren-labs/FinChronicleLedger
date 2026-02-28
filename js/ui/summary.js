@@ -29,7 +29,17 @@
         container.innerHTML = `
             <div class="summary ${collapsed ? 'summary--collapsed' : ''}">
                 <div class="summary-header" id="summary-toggle">
-                    <h3>${R().formatMonth(month)}</h3>
+                    <div class="summary-header-left">
+                        <h3>${R().formatMonth(month)}</h3>
+                        ${collapsed ? `
+                        <div class="summary-compact-values">
+                            <span class="compact-val amount--income">${R().formatCurrency(insights.income)}</span>
+                            <span class="compact-sep">|</span>
+                            <span class="compact-val amount--expense">${R().formatCurrency(insights.expense)}</span>
+                            <span class="compact-sep">|</span>
+                            <span class="compact-val ${netClass}">Net ${R().formatCurrency(insights.net)}</span>
+                        </div>` : ''}
+                    </div>
                     <button class="btn btn--ghost btn--small" aria-label="Toggle summary">
                         <i class="ri-${collapsed ? 'arrow-down-s-line' : 'arrow-up-s-line'}"></i>
                     </button>
