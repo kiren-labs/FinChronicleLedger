@@ -168,6 +168,7 @@
 
         let linesHTML = '';
         for (let i = 0; i < _advancedLines; i++) {
+            const showRemove = _advancedLines > 2;
             linesHTML += `
                 <div class="journal-line" data-line="${i}">
                     <select class="journal-account" data-line="${i}" required>
@@ -176,6 +177,7 @@
                     </select>
                     <input type="number" class="journal-debit" data-line="${i}" step="0.01" min="0" placeholder="Debit" inputmode="decimal">
                     <input type="number" class="journal-credit" data-line="${i}" step="0.01" min="0" placeholder="Credit" inputmode="decimal">
+                    ${showRemove ? `<button type="button" class="btn btn--ghost btn--small remove-line-btn" data-line="${i}" title="Remove line"><i class="ri-close-line"></i></button>` : ''}
                 </div>
             `;
         }
@@ -228,6 +230,16 @@
                 renderAdvancedForm();
             });
         }
+
+        // − Remove Line
+        document.querySelectorAll('.remove-line-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (_advancedLines > 2) {
+                    _advancedLines--;
+                    renderAdvancedForm();
+                }
+            });
+        });
 
         // Real-time balance checking
         document.querySelectorAll('.journal-debit, .journal-credit').forEach(input => {

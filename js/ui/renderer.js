@@ -41,18 +41,12 @@
 
     /**
      * Show/hide mode-specific elements.
+     * Updates data-mode on <html> so CSS selectors handle .advanced-only / .simple-only visibility.
      * @param {'simple'|'advanced'} mode
      */
     function updateForMode(mode) {
-        const simpleEls = document.querySelectorAll('[data-mode="simple"]');
-        const advancedEls = document.querySelectorAll('[data-mode="advanced"]');
-
-        for (const el of simpleEls) {
-            el.style.display = mode === 'simple' ? '' : 'none';
-        }
-        for (const el of advancedEls) {
-            el.style.display = mode === 'advanced' ? '' : 'none';
-        }
+        // Set data-mode attribute on <html> — CSS uses this to show/hide .advanced-only / .simple-only
+        document.documentElement.setAttribute('data-mode', mode);
     }
 
     /**
