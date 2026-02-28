@@ -2255,6 +2255,905 @@ button.primary.loading .btn-spinner {
 }
 
 /* ==========================================================================
+   BEM Compatibility Layer
+   Maps JS-generated BEM-style classes to proper styles.
+   ========================================================================== */
+
+/* --- Generic Buttons (.btn variants) --- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+    min-height: 48px;
+    padding: var(--button-padding-y) var(--button-padding-x);
+}
+
+.btn--primary {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+}
+
+.btn--primary:active { opacity: 0.8; }
+
+.btn--primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn--secondary {
+    background: var(--color-bg);
+    color: var(--color-text);
+    border: 2px solid var(--color-border);
+}
+
+.btn--secondary:hover { border-color: var(--color-primary); }
+
+.btn--danger {
+    background: var(--color-danger);
+    color: var(--color-on-danger);
+}
+
+.btn--danger:active { opacity: 0.8; }
+
+.btn--ghost {
+    background: transparent;
+    color: var(--color-text-muted);
+    border: none;
+    min-height: auto;
+    padding: var(--space-sm) var(--space-md);
+}
+
+.btn--ghost:hover {
+    background: var(--color-bg);
+    color: var(--color-primary);
+}
+
+.btn--ghost.btn--danger {
+    background: transparent;
+    color: var(--color-danger-strong);
+}
+
+.btn--ghost.btn--danger:hover {
+    background: var(--color-delete-bg);
+}
+
+.btn--small {
+    font-size: var(--font-md);
+    padding: var(--space-sm) var(--space-md);
+    min-height: 36px;
+}
+
+.btn--full { width: 100%; }
+
+/* --- Toast BEM classes --- */
+
+.toast--visible { display: flex !important; }
+
+.toast--success {
+    background: var(--color-success);
+    color: var(--color-on-primary);
+    box-shadow: 0 var(--space-xs) var(--space-xl) rgba(52, 199, 89, 0.4);
+}
+
+.toast--error {
+    background: var(--color-danger);
+    color: var(--color-on-danger);
+    box-shadow: 0 var(--space-xs) var(--space-xl) rgba(255, 59, 48, 0.4);
+}
+
+.toast--info {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    box-shadow: 0 var(--space-xs) var(--space-xl) rgba(0, 81, 213, 0.4);
+}
+
+/* --- Summary Section (JS structure override) ---
+   JS generates: .summary > .summary-header + .summary-body > .summary-tiles > .tile
+   CSS .summary was a grid for .summary-card; override it for the JS-generated wrapper. */
+
+#summary-container > .summary {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    max-height: none;
+    opacity: 1;
+}
+
+#summary-container > .summary.summary--collapsed .summary-body {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-bottom: 0;
+    transition: max-height var(--transition-med) ease-out, opacity var(--transition-med);
+}
+
+.summary-body {
+    transition: max-height var(--transition-med) ease-out, opacity var(--transition-med);
+}
+
+.summary-tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.tile {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    transition: all var(--transition-fast);
+}
+
+.tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.tile-label {
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.tile-value {
+    font-size: var(--font-2xl);
+    font-weight: 600;
+    font-family: var(--font-family-mono);
+    color: var(--color-text);
+}
+
+/* Amount color helpers */
+.amount--income { color: var(--color-success-strong); }
+.amount--expense { color: var(--color-danger-strong); }
+.amount--transfer { color: var(--color-primary); }
+.amount--debit { color: var(--color-success-strong); }
+.amount--credit { color: var(--color-danger-strong); }
+
+/* Delta / trend indicators */
+.delta {
+    font-size: var(--font-sm);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+}
+
+.delta--up { color: var(--color-success-strong); }
+.delta--down { color: var(--color-danger-strong); }
+.delta--flat { color: var(--color-text-muted); }
+
+/* Summary sub-sections */
+.summary-ratio {
+    font-size: var(--font-md);
+    color: var(--color-text-muted);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+    text-align: center;
+    margin-bottom: var(--space-md);
+}
+
+.summary-net-worth {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    background: var(--color-primary-soft);
+    border-radius: var(--radius-md);
+}
+
+/* --- Form: Type Toggle (BEM) --- */
+
+.form-type-toggle {
+    display: flex;
+    background: var(--color-toggle-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xs);
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-lg);
+}
+
+.type-btn {
+    flex: 1;
+    padding: var(--space-lg);
+    border: none;
+    border-radius: var(--space-sm);
+    background: transparent;
+    font-size: var(--font-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--color-text-muted);
+    min-height: 48px;
+    font-family: inherit;
+}
+
+.type-btn--active {
+    background: var(--color-toggle-active-bg);
+    color: var(--color-text);
+    box-shadow: var(--shadow-sm);
+}
+
+.type-btn:active { transform: scale(0.98); }
+
+/* --- Form: Layout helpers --- */
+
+.form-heading {
+    font-size: var(--font-2xl);
+    font-weight: 600;
+    margin-bottom: var(--space-lg);
+    color: var(--color-text);
+}
+
+.form-row {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.form-group--half {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* --- Form: Journal Header Row --- */
+
+.journal-header {
+    display: grid;
+    grid-template-columns: 1fr 100px 100px;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--color-border);
+    margin-bottom: var(--space-sm);
+}
+
+.journal-balance {
+    text-align: center;
+    padding: var(--space-sm);
+    margin: var(--space-sm) 0;
+}
+
+.balance--ok { color: var(--color-success-strong); font-weight: 600; }
+.balance--off { color: var(--color-danger-strong); font-weight: 600; }
+
+/* --- Filter Button Active (BEM) --- */
+
+.filter-btn.filter-btn--active,
+.filter-btn--active {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border-color: var(--color-primary);
+}
+
+/* --- Transaction List (JS structure) ---
+   JS generates: .transaction-list > .transaction-item (block layout)
+   with child divs: .transaction-header, .transaction-body, .transaction-actions */
+
+.transaction-list .transaction-item {
+    display: block;
+    padding: var(--space-lg);
+    padding-left: var(--space-xl);
+    border-bottom: 1px solid var(--color-bg);
+    position: relative;
+}
+
+.transaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xs);
+}
+
+.transaction-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-sm);
+}
+
+.transaction-notes {
+    font-size: var(--font-md);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.transaction-item--advanced {
+    border-left: 3px solid var(--color-primary);
+}
+
+.transaction-description {
+    font-size: var(--font-md);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.journal-lines-display {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    font-size: var(--font-sm);
+    margin-bottom: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+}
+
+.journal-line-display {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+.line-dr { color: var(--color-success-strong); font-weight: 600; font-size: var(--font-xs); }
+.line-cr { color: var(--color-danger-strong); font-weight: 600; font-size: var(--font-xs); }
+
+/* --- Pagination (BEM) --- */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    margin-top: var(--space-lg);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+/* --- Budget Health Card (BEM) --- */
+
+.budget-health-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-lg);
+    border: 1px solid var(--color-border);
+}
+
+.budget-health-card h3 {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+}
+
+.health-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-md);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+}
+
+.health--on-track .health-status,
+.health--under .health-status {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--color-success);
+}
+
+.health--over .health-status {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger);
+}
+
+.health-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+}
+
+/* --- Groups & Categories (BEM) --- */
+
+.section-title {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    color: var(--color-text);
+    margin: var(--space-lg) 0 var(--space-md) 0;
+}
+
+.top-categories {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.top-category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--space-sm);
+}
+
+.top-category-item:last-child { margin-bottom: 0; }
+
+.category-pct {
+    font-size: var(--font-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
+
+.grouped-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.group-item {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.group-item .group-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    font-size: inherit;
+}
+
+.group-month {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.group-count {
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+}
+
+.group-totals {
+    display: flex;
+    gap: var(--space-md);
+    font-size: var(--font-md);
+    font-weight: 600;
+    font-family: var(--font-family-mono);
+}
+
+.group-name {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+/* --- Reports (BEM) --- */
+
+.account-balances {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.account-balances h3 {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+}
+
+.balance-group {
+    margin-bottom: var(--space-lg);
+}
+
+.balance-group h4 {
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--space-sm);
+}
+
+.balance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-xs) 0;
+}
+
+.balance-code {
+    font-size: var(--font-xs);
+    color: var(--color-text-muted);
+    font-family: var(--font-family-mono);
+    margin-right: var(--space-xs);
+}
+
+.balance-name {
+    font-size: var(--font-md);
+    color: var(--color-text);
+    flex: 1;
+}
+
+.balance-amount {
+    font-size: var(--font-md);
+    font-weight: 600;
+    font-family: var(--font-family-mono);
+}
+
+.net-worth-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    background: var(--color-primary-soft);
+    border-radius: var(--radius-md);
+    margin-top: var(--space-md);
+    font-size: var(--font-lg);
+}
+
+/* --- Trial Balance (BEM) --- */
+
+.trial-balance {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.trial-balance h3 {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+}
+
+.tb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-md);
+}
+
+.tb-table th {
+    text-align: left;
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 2px solid var(--color-border);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: var(--font-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tb-table td {
+    padding: var(--space-xs) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.text-right {
+    text-align: right;
+    font-family: var(--font-family-mono);
+    font-weight: 500;
+}
+
+.tb-totals {
+    font-weight: 700;
+    border-top: 2px solid var(--color-text);
+}
+
+.tb-totals td {
+    padding-top: var(--space-sm);
+    border-bottom: none;
+}
+
+.tb-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-sm);
+    font-weight: 600;
+    margin-top: var(--space-md);
+}
+
+.tb-status.balance--ok {
+    background: var(--color-chip-positive-bg);
+    color: var(--color-success-strong);
+}
+
+.tb-status.balance--off {
+    background: var(--color-chip-negative-bg);
+    color: var(--color-danger-strong);
+}
+
+/* --- Modal Overlay (BEM) ---
+   JS creates: .modal-overlay > .modal > .modal-close + .modal-content */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-overlay .modal {
+    display: block;
+    position: relative;
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    max-width: 440px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-close {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    background: none;
+    border: none;
+    font-size: var(--font-3xl);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 0;
+    width: var(--icon-button-md);
+    height: var(--icon-button-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.modal-close:hover { background: var(--color-bg); }
+
+.modal-overlay .modal-content h3 {
+    font-size: var(--font-2xl);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+}
+
+.modal-overlay .modal-content p {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-lg);
+    line-height: 1.5;
+}
+
+/* --- Currency Picker (BEM) --- */
+
+.currency-option {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    padding: var(--space-md) var(--space-lg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-md);
+    width: 100%;
+    text-align: left;
+}
+
+.currency-option:hover {
+    background: var(--color-bg);
+    border-color: var(--color-primary);
+}
+
+.currency-option--selected {
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary);
+}
+
+/* --- Settings Section (BEM) --- */
+
+.settings-section {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.settings-section h3 {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+}
+
+.settings-section p {
+    font-size: var(--font-md);
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.mode-toggle {
+    display: flex;
+    background: var(--color-toggle-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xs);
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-md);
+}
+
+.mode-btn {
+    flex: 1;
+    padding: var(--space-lg);
+    border: none;
+    border-radius: var(--space-sm);
+    background: transparent;
+    font-size: var(--font-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--color-text-muted);
+    min-height: 48px;
+    font-family: inherit;
+}
+
+.mode-btn--active {
+    background: var(--color-toggle-active-bg);
+    color: var(--color-text);
+    box-shadow: var(--shadow-sm);
+}
+
+.settings-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+/* --- Utility text classes --- */
+
+.text-muted { color: var(--color-text-muted); }
+.text-warning { color: var(--color-warning-text); }
+
+/* --- FAQ as native <details> elements --- */
+
+details.faq-item {
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-md) 0;
+}
+
+details.faq-item:last-child { border-bottom: none; }
+
+details.faq-item summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--color-text);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+    list-style: none;
+}
+
+details.faq-item summary::-webkit-details-marker { display: none; }
+details.faq-item summary::marker { display: none; }
+
+details.faq-item summary:hover { background: var(--color-bg); }
+
+details.faq-item p {
+    padding: var(--space-md);
+    color: var(--color-text-muted);
+    line-height: 1.6;
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+    margin-top: var(--space-sm);
+}
+
+/* --- BEM Mobile Responsive --- */
+
+@media (max-width: 480px) {
+    .summary-tiles { gap: var(--space-sm); }
+
+    .tile { padding: var(--space-md); }
+
+    .tile-value { font-size: var(--font-xl); }
+
+    .journal-header { grid-template-columns: 1fr 80px 80px; }
+
+    .form-row {
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+
+    .health-details {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-sm);
+        font-size: var(--font-xs);
+    }
+
+    .group-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .group-totals {
+        font-size: var(--font-sm);
+        flex-wrap: wrap;
+    }
+
+    .transaction-list .transaction-item {
+        padding: var(--space-md);
+        padding-left: var(--space-lg);
+    }
+
+    .pagination {
+        gap: var(--space-md);
+        padding: var(--space-md);
+    }
+
+    .btn--small {
+        font-size: var(--font-sm);
+        padding: var(--space-sm) var(--space-sm);
+        min-height: 32px;
+    }
+
+    .settings-buttons .btn { font-size: var(--font-md); }
+}
+
+@media (max-width: 360px) {
+    .summary-tiles { grid-template-columns: 1fr; }
+
+    .journal-header { display: none; }
+}
+
+/* ==========================================================================
    Animations
    ========================================================================== */
 

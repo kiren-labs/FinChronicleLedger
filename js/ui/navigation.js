@@ -37,7 +37,7 @@
 
         // Update nav button active state
         document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.classList.toggle('nav-btn--active', btn.dataset.tab === tabName);
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
         });
 
         // Trigger re-render for the active tab
