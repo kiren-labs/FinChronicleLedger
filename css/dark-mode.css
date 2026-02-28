@@ -476,6 +476,15 @@
     color: var(--color-text);
 }
 
+[data-theme="dark"] #summary-container > .summary > .summary-header:hover {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] #summary-container > .summary.summary--collapsed {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
 [data-theme="dark"] .summary-ratio {
     background: var(--color-bg);
     color: var(--color-text-muted);

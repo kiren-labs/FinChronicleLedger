@@ -2368,11 +2368,49 @@ button.primary.loading .btn-spinner {
     opacity: 1;
 }
 
+#summary-container > .summary > .summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    cursor: pointer;
+    user-select: none;
+    border-radius: var(--radius-lg);
+    transition: background var(--transition-fast);
+}
+
+#summary-container > .summary > .summary-header:hover {
+    background: var(--color-bg);
+}
+
+#summary-container > .summary > .summary-header h3 {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: 600;
+}
+
+#summary-container > .summary.summary--collapsed {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+#summary-container > .summary.summary--collapsed > .summary-header {
+    padding: var(--space-lg);
+    margin-bottom: 0;
+}
+
+#summary-container > .summary.summary--collapsed > .summary-header:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
 #summary-container > .summary.summary--collapsed .summary-body {
     max-height: 0;
     opacity: 0;
     overflow: hidden;
     margin-bottom: 0;
+    padding: 0;
     transition: max-height var(--transition-med) ease-out, opacity var(--transition-med);
 }
 
