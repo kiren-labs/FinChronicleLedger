@@ -1,0 +1,679 @@
+/* FinChronicleLedger - Dark Mode Styles */
+/* Version: 1.0.0 */
+/* Uses [data-theme="dark"] on <html> instead of body.dark-mode */
+
+/* Dark mode token overrides */
+[data-theme="dark"] {
+    --color-bg: #000000;
+    --color-surface: #1c1c1e;
+    --color-text: #ffffff;
+    --color-text-muted: #aeaeb2;
+    --color-text-subtle: #8e8e93;
+    --color-border: #38383a;
+    --color-primary: #0053AD;
+    --color-primary-hover: #409CFF;
+    --color-primary-strong: #409CFF;
+    --color-disabled-bg: #2c2c2e;
+    --color-disabled-text: #8e8e93;
+    --color-status: #30d158;
+    --color-primary-soft: #1a2a3a;
+    --color-toggle-bg: #2c2c2e;
+    --color-toggle-active-bg: #1c1c1e;
+
+    /* Semantic colors for dark mode */
+    --color-success: #32D74B;
+    --color-success-strong: #30E85D;
+    --color-danger: #FF453A;
+    --color-danger-strong: #FF6B6B;
+
+    /* Brand wordmark - brighter for dark bg */
+    --color-fin: #5B8DEF;
+    --color-chronicle: #7EE847;
+    --color-ledger: #409CFF;
+
+    --shadow-sm: 0 var(--space-2xs) var(--space-sm) rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 var(--space-2xs) var(--space-md) rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   Dark Mode Containers
+   ========================================================================== */
+
+[data-theme="dark"] .card,
+[data-theme="dark"] header,
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .bottom-nav,
+[data-theme="dark"] .toolbar-btn,
+[data-theme="dark"] .category-filter,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-color: var(--color-border);
+}
+
+/* ==========================================================================
+   Dark Mode Text
+   ========================================================================== */
+
+[data-theme="dark"] h1,
+[data-theme="dark"] .transaction-category,
+[data-theme="dark"] label,
+[data-theme="dark"] .group-header,
+[data-theme="dark"] .modal-title {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .summary-label {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .transaction-note,
+[data-theme="dark"] .transaction-date,
+[data-theme="dark"] .group-total,
+[data-theme="dark"] .modal-text {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .nav-btn,
+[data-theme="dark"] .filter-btn {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .nav-btn.active,
+[data-theme="dark"] .filter-btn.active {
+    color: var(--color-on-primary);
+}
+
+/* ==========================================================================
+   Dark Mode Type Toggle
+   ========================================================================== */
+
+[data-theme="dark"] .type-toggle {
+    background: var(--color-toggle-bg);
+}
+
+[data-theme="dark"] .type-option.active {
+    background: var(--color-toggle-active-bg);
+    color: var(--color-text);
+    box-shadow: 0 var(--space-2xs) var(--space-2xs) rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   Dark Mode Status & Version
+   ========================================================================== */
+
+[data-theme="dark"] .status {
+    color: var(--color-status);
+}
+
+[data-theme="dark"] .version {
+    background: var(--color-toggle-bg);
+    color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   Dark Mode Transactions
+   ========================================================================== */
+
+[data-theme="dark"] .transaction-item {
+    border-bottom-color: var(--color-border);
+}
+
+[data-theme="dark"] .transaction-icon.income {
+    background: #1a3a23;
+    color: #30d158;
+}
+
+[data-theme="dark"] .transaction-icon.expense {
+    background: #3a1a1a;
+    color: #ff453a;
+}
+
+/* ==========================================================================
+   Dark Mode Pagination
+   ========================================================================== */
+
+[data-theme="dark"] .pagination-container {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .pagination-btn {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+}
+
+[data-theme="dark"] .pagination-btn:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    box-shadow: 0 var(--space-2xs) var(--space-md) rgba(0, 97, 245, 0.4);
+}
+
+[data-theme="dark"] .pagination-btn:disabled {
+    background: var(--color-disabled-bg);
+    color: var(--color-disabled-text);
+}
+
+[data-theme="dark"] .pagination-info {
+    color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   Dark Mode Modals
+   ========================================================================== */
+
+[data-theme="dark"] .modal-content {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .modal-btn-cancel {
+    background: var(--color-border);
+    color: var(--color-on-primary);
+}
+
+[data-theme="dark"] .close-btn {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .close-btn:hover {
+    background: var(--color-toggle-bg);
+}
+
+/* ==========================================================================
+   Dark Mode Currency Selector
+   ========================================================================== */
+
+[data-theme="dark"] .currency-item {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .currency-item:hover {
+    background: var(--color-toggle-bg);
+    border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .currency-item.active {
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .currency-code {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .currency-name {
+    color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   Dark Mode Insights / Groups
+   ========================================================================== */
+
+[data-theme="dark"] .budget-health-section,
+[data-theme="dark"] .top-categories-section {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .category-row {
+    background: var(--color-bg);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .budget-health-title h3,
+[data-theme="dark"] .section-header h3,
+[data-theme="dark"] .metric-value,
+[data-theme="dark"] .category-name {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .metric-label,
+[data-theme="dark"] .category-count,
+[data-theme="dark"] .category-percent {
+    color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   Dark Mode Reports
+   ========================================================================== */
+
+[data-theme="dark"] .report-card {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .account-type-label {
+    color: var(--color-text-muted);
+    border-bottom-color: var(--color-border);
+}
+
+[data-theme="dark"] .account-balance-row .account-name {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .trial-balance-table th {
+    border-bottom-color: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .trial-balance-table td {
+    border-bottom-color: var(--color-border);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .trial-balance-table .total-row {
+    border-top-color: var(--color-text);
+}
+
+[data-theme="dark"] .net-worth-summary {
+    background: var(--color-primary-soft);
+}
+
+/* ==========================================================================
+   Dark Mode Backup & FAQ
+   ========================================================================== */
+
+[data-theme="dark"] .backup-status-card,
+[data-theme="dark"] .faq-section {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .backup-header h3 {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .backup-header .backup-icon {
+    color: var(--color-primary-strong);
+}
+
+[data-theme="dark"] .backup-status-good {
+    background: #1e4620;
+    color: #a8e6a3;
+}
+
+[data-theme="dark"] .backup-status-good i { color: #a8e6a3; }
+
+[data-theme="dark"] .backup-status-warning {
+    background: #4a3d1a;
+    color: #ffd54f;
+}
+
+[data-theme="dark"] .backup-status-warning i { color: #ffd54f; }
+
+[data-theme="dark"] .backup-status-danger {
+    background: #4a1a1f;
+    color: #ff9aa2;
+}
+
+[data-theme="dark"] .backup-status-danger i { color: #ff9aa2; }
+
+[data-theme="dark"] .faq-section-header {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .faq-section-header:hover {
+    background: var(--color-border);
+}
+
+[data-theme="dark"] .faq-section-title h3 {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .faq-section-title i {
+    color: var(--color-primary-strong);
+}
+
+[data-theme="dark"] .faq-question {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .faq-item-icon {
+    color: var(--color-primary-strong);
+}
+
+[data-theme="dark"] .faq-question:hover {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .faq-answer {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .faq-answer code {
+    background: var(--color-bg);
+}
+
+/* ==========================================================================
+   Dark Mode About
+   ========================================================================== */
+
+[data-theme="dark"] .about-section {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .about-section h3 {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .about-section p {
+    color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   Dark Mode Utility States
+   ========================================================================== */
+
+[data-theme="dark"] .empty-state {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .toolbar-btn {
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .toolbar-btn:active {
+    background: var(--color-toggle-bg);
+}
+
+[data-theme="dark"] .filter-label {
+    color: var(--color-text-muted);
+}
+
+/* Dark Mode Mode Toggle */
+[data-theme="dark"] .mode-toggle-card {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .mode-toggle-info h3 {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .mode-toggle-info p {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .mode-switch {
+    background: var(--color-border);
+}
+
+[data-theme="dark"] .mode-switch.active {
+    background: var(--color-primary);
+}
+
+/* Advanced mode journal editor dark */
+[data-theme="dark"] .journal-line {
+    background: var(--color-bg);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .journal-line .remove-line-btn {
+    background: rgba(255, 69, 58, 0.15);
+    color: var(--color-danger-strong);
+}
+
+[data-theme="dark"] .journal-line .remove-line-btn:hover {
+    background: rgba(255, 69, 58, 0.3);
+}
+
+[data-theme="dark"] .journal-totals {
+    background: var(--color-bg);
+}
+
+[data-theme="dark"] .add-line-btn {
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .add-line-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* Toast in dark mode */
+[data-theme="dark"] .toast.info,
+[data-theme="dark"] .toast--info {
+    background: var(--color-primary-strong);
+}
+
+/* ==========================================================================
+   Dark Mode: BEM Compatibility Layer
+   ========================================================================== */
+
+/* Buttons */
+[data-theme="dark"] .btn--secondary {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .btn--ghost {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .btn--ghost:hover {
+    background: var(--color-toggle-bg);
+    color: var(--color-primary-strong);
+}
+
+[data-theme="dark"] .btn--ghost.btn--danger {
+    color: var(--color-danger-strong);
+}
+
+/* Summary tiles */
+[data-theme="dark"] .tile {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .tile-label {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .tile-value {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] #summary-container > .summary > .summary-header:hover {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] #summary-container > .summary.summary--collapsed {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .summary-compact-values .compact-sep {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .summary-ratio {
+    background: var(--color-bg);
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .summary-net-worth {
+    background: var(--color-primary-soft);
+}
+
+/* Forms */
+[data-theme="dark"] .form-type-toggle {
+    background: var(--color-toggle-bg);
+}
+
+[data-theme="dark"] .type-btn--active {
+    background: var(--color-toggle-active-bg);
+    color: var(--color-text);
+    box-shadow: 0 var(--space-2xs) var(--space-2xs) rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .journal-header {
+    border-bottom-color: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+/* Filter buttons */
+[data-theme="dark"] .filter-btn--active {
+    color: var(--color-on-primary);
+}
+
+/* Transactions */
+[data-theme="dark"] .transaction-list .transaction-item {
+    border-bottom-color: var(--color-border);
+}
+
+[data-theme="dark"] .transaction-notes,
+[data-theme="dark"] .transaction-description {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .journal-lines-display {
+    background: var(--color-bg);
+}
+
+/* Pagination */
+[data-theme="dark"] .pagination {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Groups */
+[data-theme="dark"] .budget-health-card {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .top-categories {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .top-category-item {
+    background: var(--color-bg);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .group-item {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .group-item .group-header {
+    background: transparent;
+}
+
+[data-theme="dark"] .group-month {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .group-count,
+[data-theme="dark"] .category-pct {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .section-title {
+    color: var(--color-text);
+}
+
+/* Reports */
+[data-theme="dark"] .account-balances,
+[data-theme="dark"] .trial-balance {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .balance-group h4 {
+    color: var(--color-text-muted);
+    border-bottom-color: var(--color-border);
+}
+
+[data-theme="dark"] .balance-name {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .balance-code {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .net-worth-row {
+    background: var(--color-primary-soft);
+}
+
+[data-theme="dark"] .tb-table th {
+    border-bottom-color: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .tb-table td {
+    border-bottom-color: var(--color-border);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .tb-totals {
+    border-top-color: var(--color-text);
+}
+
+/* Modals */
+[data-theme="dark"] .modal-overlay .modal {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .modal-close {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .modal-close:hover {
+    background: var(--color-toggle-bg);
+}
+
+/* Currency picker */
+[data-theme="dark"] .currency-option {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .currency-option:hover {
+    background: var(--color-toggle-bg);
+    border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .currency-option--selected {
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary);
+}
+
+/* Settings */
+[data-theme="dark"] .settings-section {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .settings-section h3 {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .mode-toggle {
+    background: var(--color-toggle-bg);
+}
+
+[data-theme="dark"] .mode-btn--active {
+    background: var(--color-toggle-active-bg);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .setting-row {
+    color: var(--color-text);
+}
+
+/* FAQ (details/summary) */
+[data-theme="dark"] details.faq-item summary {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] details.faq-item summary:hover {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] details.faq-item p {
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+}

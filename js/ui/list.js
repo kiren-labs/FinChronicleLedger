@@ -1,0 +1,246 @@
+/**
+ * FinChronicleLedger — UI: List
+ * Transaction list with filtering, pagination, edit/delete actions.
+ */
+(function (global) {
+    'use strict';
+
+    const State = () => global.FCL.State;
+    const Types = () => global.FCL.Types;
+    const Ledger = () => global.FCL.Ledger;
+    const AccountService = () => global.FCL.AccountService;
+    const TransactionService = () => global.FCL.TransactionService;
+    const ReportService = () => global.FCL.ReportService;
+    const R = () => global.FCL.UI.Renderer;
+
+    const ITEMS_PER_PAGE = 20;
+
+    // =====================================================================
+    // Render
+    // =====================================================================
+
+    function render(mode) {
+        renderFilters();
+        renderTransactionList(mode);
+    }
+
+    // =====================================================================
+    // Filters
+    // =====================================================================
+
+    function renderFilters() {
+        const container = document.getElementById('filters-container');
+        if (!container) return;
+
+        const months = ReportService().getAvailableMonths();
+        const currentMonth = State().getCurrentMonth();
+
+        let monthButtons = months.map(m => {
+            const active = m === currentMonth ? 'filter-btn--active' : '';
+            return `<button class="filter-btn ${active}" data-month="${m}">${R().formatMonth(m)}</button>`;
+        }).join('');
+
+        if (months.length === 0) {
+            monthButtons = '<span class="text-muted">No transactions yet</span>';
+        }
+
+        container.innerHTML = `
+            <div class="filters">
+                <div class="filter-months">${monthButtons}</div>
+            </div>
+        `;
+
+        // Bind month filter clicks
+        container.querySelectorAll('.filter-btn[data-month]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                State().setCurrentMonth(btn.dataset.month);
+                State().setCurrentPage(1);
+            });
+        });
+    }
+
+    // =====================================================================
+    // Transaction List
+    // =====================================================================
+
+    function renderTransactionList(mode) {
+        const container = document.getElementById('list-container');
+        if (!container) return;
+
+        const month = State().getCurrentMonth();
+        const page = State().getCurrentPage();
+        let entries = State().getEntries()
+            .filter(e => e.date.startsWith(month))
+            .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+
+        // Category filter
+        const catFilter = State().getCurrentCategory();
+        if (catFilter) {
+            entries = entries.filter(e => {
+                for (const line of e.lines) {
+                    const acc = AccountService().getAccountById(line.accountId);
+                    if (acc && acc.name === catFilter) return true;
+                }
+                return false;
+            });
+        }
+
+        // Pagination
+        const totalPages = Math.max(1, Math.ceil(entries.length / ITEMS_PER_PAGE));
+        const startIdx = (page - 1) * ITEMS_PER_PAGE;
+        const pageEntries = entries.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+
+        if (pageEntries.length === 0) {
+            container.innerHTML = '<div class="empty-state"><p>No transactions this month.</p></div>';
+            return;
+        }
+
+        const accounts = new Map(State().getAccounts().map(a => [a.id, a]));
+
+        let html = '';
+        for (const entry of pageEntries) {
+            if (mode === 'advanced') {
+                html += _renderAdvancedListItem(entry, accounts);
+            } else {
+                html += _renderSimpleListItem(entry, accounts);
+            }
+        }
+
+        // Pagination controls
+        let paginationHTML = '';
+        if (totalPages > 1) {
+            paginationHTML = `
+                <div class="pagination">
+                    <button class="btn btn--small" id="prev-page" ${page <= 1 ? 'disabled' : ''}>← Prev</button>
+                    <span class="pagination-info">${page} / ${totalPages}</span>
+                    <button class="btn btn--small" id="next-page" ${page >= totalPages ? 'disabled' : ''}>Next →</button>
+                </div>
+            `;
+        }
+
+        container.innerHTML = `
+            <div class="transaction-list">${html}</div>
+            ${paginationHTML}
+        `;
+
+        _bindListEvents();
+    }
+
+    // =====================================================================
+    // List Items
+    // =====================================================================
+
+    function _renderSimpleListItem(entry, accounts) {
+        const info = Ledger().getSimpleDisplayInfo(entry);
+        let categoryName = '';
+        let amountClass = '';
+        let prefix = '';
+
+        if (info) {
+            if (info.type === 'transfer') {
+                const from = accounts.get(info.fromAccountId);
+                const to = accounts.get(info.toAccountId);
+                categoryName = `${from ? from.name : '?'} → ${to ? to.name : '?'}`;
+                amountClass = 'amount--transfer';
+            } else {
+                const acc = accounts.get(info.categoryAccountId);
+                categoryName = acc ? acc.name : 'Unknown';
+                amountClass = info.type === 'income' ? 'amount--income' : 'amount--expense';
+                prefix = info.type === 'income' ? '+' : '-';
+            }
+        }
+
+        return `
+            <div class="transaction-item" data-id="${entry.id}">
+                <div class="transaction-header">
+                    <span class="transaction-date">${R().formatDate(entry.date)}</span>
+                    <span class="transaction-amount ${amountClass}">${prefix}${R().formatCurrency(info ? info.amount : 0)}</span>
+                </div>
+                <div class="transaction-body">
+                    <span class="transaction-category">${categoryName}</span>
+                    ${entry.description ? `<span class="transaction-notes">${entry.description}</span>` : ''}
+                </div>
+                <div class="transaction-actions">
+                    <button class="btn btn--small btn--ghost action-edit" data-id="${entry.id}"><i class="ri-edit-line"></i> Edit</button>
+                    <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${entry.id}"><i class="ri-delete-bin-line"></i> Delete</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function _renderAdvancedListItem(entry, accounts) {
+        const total = Ledger().getEntryTotal(entry);
+        let linesHTML = entry.lines.map(line => {
+            const acc = accounts.get(line.accountId);
+            const accName = acc ? `${acc.code} ${acc.name}` : 'Unknown';
+            if (line.debit > 0) {
+                return `<div class="journal-line-display"><span class="line-dr">DR</span> <span>${accName}</span> <span class="amount--debit">${R().formatCurrency(line.debit)}</span></div>`;
+            } else {
+                return `<div class="journal-line-display"><span class="line-cr">CR</span> <span>${accName}</span> <span class="amount--credit">${R().formatCurrency(line.credit)}</span></div>`;
+            }
+        }).join('');
+
+        return `
+            <div class="transaction-item transaction-item--advanced" data-id="${entry.id}">
+                <div class="transaction-header">
+                    <span class="transaction-date">${R().formatDate(entry.date)} • ${entry.type}</span>
+                </div>
+                <div class="transaction-description">${entry.description || ''}</div>
+                <div class="journal-lines-display">${linesHTML}</div>
+                <div class="transaction-actions">
+                    <button class="btn btn--small btn--ghost action-edit" data-id="${entry.id}"><i class="ri-edit-line"></i> Edit</button>
+                    <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${entry.id}"><i class="ri-delete-bin-line"></i> Delete</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // =====================================================================
+    // Event Binding
+    // =====================================================================
+
+    function _bindListEvents() {
+        // Edit buttons
+        document.querySelectorAll('.action-edit').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const entry = State().getEntryById(btn.dataset.id);
+                if (entry && global.FCL.UI.Forms) {
+                    global.FCL.UI.Forms.populateFormForEdit(entry);
+                }
+            });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.action-delete').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (global.FCL.UI.Modals) {
+                    global.FCL.UI.Modals.showDeleteConfirm(btn.dataset.id);
+                } else {
+                    // Fallback
+                    if (confirm('Delete this transaction?')) {
+                        await TransactionService().deleteTransaction(btn.dataset.id);
+                        R().showToast('Transaction deleted', 'success');
+                    }
+                }
+            });
+        });
+
+        // Pagination
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        if (prevBtn) prevBtn.addEventListener('click', () => State().setCurrentPage(State().getCurrentPage() - 1));
+        if (nextBtn) nextBtn.addEventListener('click', () => State().setCurrentPage(State().getCurrentPage() + 1));
+    }
+
+    // =====================================================================
+    // Export
+    // =====================================================================
+    global.FCL = global.FCL || {};
+    global.FCL.UI = global.FCL.UI || {};
+    global.FCL.UI.List = {
+        render,
+        renderFilters,
+        renderTransactionList,
+    };
+
+})(window);
