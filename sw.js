@@ -1,0 +1,152 @@
+/**
+ * FinChronicleLedger — Service Worker
+ * 
+ * Cache-first strategy for offline-first PWA.
+ * Precaches all app assets on install, serves from cache on fetch,
+ * falls back to network, and cleans old caches on activate.
+ */
+
+const CACHE_NAME = 'finchronicle-ledger-v1.0.0';
+
+const CACHED_URLS = [
+    './',
+    './index.html',
+    './manifest.json',
+    './css/tokens.css',
+    './css/styles.css',
+    './css/dark-mode.css',
+    './js/app.js',
+    './js/domain/types.js',
+    './js/domain/validators.js',
+    './js/domain/accounting.js',
+    './js/domain/ledger.js',
+    './js/domain/chart-of-accounts.js',
+    './js/domain/reports.js',
+    './js/infrastructure/db.js',
+    './js/infrastructure/storage.js',
+    './js/infrastructure/file-io.js',
+    './js/application/state.js',
+    './js/application/transaction-service.js',
+    './js/application/account-service.js',
+    './js/application/report-service.js',
+    './js/application/migration-service.js',
+    './js/application/import-export-service.js',
+    './js/application/backup-service.js',
+    './js/application/settings-service.js',
+    './js/ui/renderer.js',
+    './js/ui/forms.js',
+    './js/ui/list.js',
+    './js/ui/summary.js',
+    './js/ui/groups.js',
+    './js/ui/reports-ui.js',
+    './js/ui/modals.js',
+    './js/ui/navigation.js',
+    './js/ui/settings-ui.js'
+];
+
+/**
+ * Install: precache all static assets
+ */
+self.addEventListener('install', function (event) {
+    console.log('[SW] Installing...');
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(function (cache) {
+                console.log('[SW] Precaching app shell');
+                return cache.addAll(CACHED_URLS);
+            })
+            .then(function () {
+                // Skip waiting to activate immediately
+                return self.skipWaiting();
+            })
+    );
+});
+
+/**
+ * Activate: clean up old caches
+ */
+self.addEventListener('activate', function (event) {
+    console.log('[SW] Activating...');
+    event.waitUntil(
+        caches.keys()
+            .then(function (cacheNames) {
+                return Promise.all(
+                    cacheNames
+                        .filter(function (name) {
+                            return name !== CACHE_NAME;
+                        })
+                        .map(function (name) {
+                            console.log('[SW] Deleting old cache:', name);
+                            return caches.delete(name);
+                        })
+                );
+            })
+            .then(function () {
+                // Claim all open clients immediately
+                return self.clients.claim();
+            })
+    );
+});
+
+/**
+ * Fetch: cache-first strategy
+ * 1. Try cache
+ * 2. Fall back to network
+ * 3. Cache the network response for next time
+ */
+self.addEventListener('fetch', function (event) {
+    // Only handle GET requests
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    // Skip CDN requests (Remix Icons) — let them go to network
+    if (event.request.url.includes('cdn.jsdelivr.net')) {
+        event.respondWith(
+            caches.match(event.request)
+                .then(function (cached) {
+                    return cached || fetch(event.request).then(function (response) {
+                        // Cache CDN resources for offline use
+                        if (response.ok) {
+                            var responseClone = response.clone();
+                            caches.open(CACHE_NAME).then(function (cache) {
+                                cache.put(event.request, responseClone);
+                            });
+                        }
+                        return response;
+                    }).catch(function () {
+                        // CDN unavailable, return cached if available
+                        return cached;
+                    });
+                })
+        );
+        return;
+    }
+
+    event.respondWith(
+        caches.match(event.request)
+            .then(function (cachedResponse) {
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+
+                return fetch(event.request).then(function (networkResponse) {
+                    // Only cache same-origin requests
+                    if (networkResponse.ok && event.request.url.startsWith(self.location.origin)) {
+                        var responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then(function (cache) {
+                            cache.put(event.request, responseClone);
+                        });
+                    }
+                    return networkResponse;
+                });
+            })
+            .catch(function () {
+                // Both cache and network failed
+                // For navigation requests, try to return the cached index.html
+                if (event.request.mode === 'navigate') {
+                    return caches.match('./index.html');
+                }
+            })
+    );
+});
