@@ -409,6 +409,15 @@
     border-color: var(--color-border);
 }
 
+[data-theme="dark"] .journal-line .remove-line-btn {
+    background: rgba(255, 69, 58, 0.15);
+    color: var(--color-danger-strong);
+}
+
+[data-theme="dark"] .journal-line .remove-line-btn:hover {
+    background: rgba(255, 69, 58, 0.3);
+}
+
 [data-theme="dark"] .journal-totals {
     background: var(--color-bg);
 }
