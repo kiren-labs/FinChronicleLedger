@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="FCLedger">
     <meta name="theme-color" content="#0051D5">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; script-src 'self'; connect-src 'self'">
     <title>FinChronicleLedger - Track Your Financial Journey</title>
 
     <!-- PWA Icons -->
@@ -61,7 +62,7 @@
             <div class="install-prompt" id="installPrompt">
                 <h3><i class="ri-smartphone-line"></i> Install App</h3>
                 <p>Tap Share → Add to Home Screen for best experience</p>
-                <button onclick="FCL.SettingsService.hideInstallPrompt(); document.getElementById('installPrompt').style.display='none';">Got it!</button>
+                <button id="dismissInstallPrompt">Got it!</button>
             </div>
 
             <!-- ============================================================
