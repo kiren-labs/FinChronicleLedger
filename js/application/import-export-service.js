@@ -103,10 +103,13 @@
 
     /**
      * Restore from a full JSON backup.
+     * Validates and sanitizes all imported data to prevent XSS and corruption.
      * @param {string} jsonText
      * @returns {Promise<{success: boolean, errors?: string[], stats?: Object}>}
      */
     async function restoreFromBackup(jsonText) {
+        const Validators = () => global.FCL.Validators;
+
         let backup;
         try {
             backup = JSON.parse(jsonText);
@@ -114,28 +117,92 @@
             return { success: false, errors: ['Invalid JSON file'] };
         }
 
-        if (!backup.accounts || !backup.journalEntries) {
+        // Structural validation
+        if (!backup || typeof backup !== 'object') {
+            return { success: false, errors: ['Invalid backup format'] };
+        }
+        if (!Array.isArray(backup.accounts) || !Array.isArray(backup.journalEntries)) {
             return { success: false, errors: ['Invalid backup format: missing accounts or journalEntries'] };
+        }
+
+        // Sanitize account data
+        const sanitizedAccounts = backup.accounts.map(function (acc) {
+            return {
+                id: String(acc.id || ''),
+                code: Number(acc.code) || 0,
+                name: Validators().sanitizeHTML(String(acc.name || '')),
+                type: String(acc.type || ''),
+                normalBalance: String(acc.normalBalance || 'debit'),
+                isActive: Boolean(acc.isActive),
+                isSystem: Boolean(acc.isSystem),
+                parentId: acc.parentId ? String(acc.parentId) : null,
+                sortOrder: Number(acc.sortOrder) || 0,
+                createdAt: String(acc.createdAt || ''),
+                updatedAt: String(acc.updatedAt || ''),
+            };
+        });
+
+        // Sanitize journal entry data
+        const sanitizedEntries = backup.journalEntries.map(function (entry) {
+            return {
+                id: String(entry.id || ''),
+                date: String(entry.date || ''),
+                type: String(entry.type || ''),
+                description: Validators().sanitizeHTML(String(entry.description || '')),
+                reference: entry.reference ? Validators().sanitizeHTML(String(entry.reference)) : null,
+                tags: Array.isArray(entry.tags) ? entry.tags.map(function (t) { return Validators().sanitizeHTML(String(t)); }) : [],
+                source: String(entry.source || 'import'),
+                lines: Array.isArray(entry.lines) ? entry.lines.map(function (line) {
+                    return {
+                        id: String(line.id || ''),
+                        accountId: String(line.accountId || ''),
+                        debit: Math.max(0, Number(line.debit) || 0),
+                        credit: Math.max(0, Number(line.credit) || 0),
+                        memo: Validators().sanitizeHTML(String(line.memo || '')),
+                    };
+                }) : [],
+                createdAt: String(entry.createdAt || ''),
+                updatedAt: String(entry.updatedAt || ''),
+            };
+        });
+
+        // Validate account types
+        const validTypes = Object.values(Types().AccountType);
+        for (const acc of sanitizedAccounts) {
+            if (!validTypes.includes(acc.type)) {
+                return { success: false, errors: ['Invalid account type: ' + acc.type] };
+            }
+            if (!acc.id || !acc.name) {
+                return { success: false, errors: ['Backup contains accounts with missing id or name'] };
+            }
         }
 
         // Clear existing data
         await DB().clearAllAccounts();
         await DB().clearAllJournalEntries();
 
-        // Restore accounts
-        if (backup.accounts.length > 0) {
-            await DB().bulkSaveAccounts(backup.accounts);
+        // Restore sanitized accounts
+        if (sanitizedAccounts.length > 0) {
+            await DB().bulkSaveAccounts(sanitizedAccounts);
         }
 
-        // Restore entries
-        if (backup.journalEntries.length > 0) {
-            await DB().bulkSaveJournalEntries(backup.journalEntries);
+        // Restore sanitized entries
+        if (sanitizedEntries.length > 0) {
+            await DB().bulkSaveJournalEntries(sanitizedEntries);
         }
 
-        // Restore settings
-        if (backup.settings) {
-            for (const [key, value] of Object.entries(backup.settings)) {
-                await DB().setSetting(key, value);
+        // Restore settings (only known safe keys)
+        if (backup.settings && typeof backup.settings === 'object') {
+            var safeSettingKeys = [
+                'currency', 'darkMode', 'uiMode', 'app_version',
+                'last_backup_timestamp', 'summaryCollapsed', 'installPromptHidden',
+                'default_asset_account', 'v3_migration_done'
+            ];
+            for (var _i = 0; _i < safeSettingKeys.length; _i++) {
+                var key = safeSettingKeys[_i];
+                if (key in backup.settings) {
+                    await DB().setSetting(key, backup.settings[key]);
+                }
             }
         }
 
@@ -153,8 +220,8 @@
         return {
             success: true,
             stats: {
-                accounts: backup.accounts.length,
-                entries: backup.journalEntries.length,
+                accounts: sanitizedAccounts.length,
+                entries: sanitizedEntries.length,
                 trialBalanced: tb.balanced,
             },
         };
