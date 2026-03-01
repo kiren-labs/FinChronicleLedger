@@ -72,13 +72,13 @@
                     <div class="form-group">
                         <label for="from-account">From Account</label>
                         <select id="from-account" required>
-                            ${transferAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+                            ${transferAccounts.map(a => `<option value="${R().escapeHTML(a.id)}">${R().escapeHTML(a.name)}</option>`).join('')}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="to-account">To Account</label>
                         <select id="to-account" required>
-                            ${transferAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+                            ${transferAccounts.map(a => `<option value="${R().escapeHTML(a.id)}">${R().escapeHTML(a.name)}</option>`).join('')}
                         </select>
                     </div>
                     <div class="form-group">
@@ -173,7 +173,7 @@
                 <div class="journal-line" data-line="${i}">
                     <select class="journal-account" data-line="${i}" required>
                         <option value="">Select account...</option>
-                        ${accounts.map(a => `<option value="${a.id}">${a.code} ${a.name}</option>`).join('')}
+                        ${accounts.map(a => `<option value="${R().escapeHTML(a.id)}">${R().escapeHTML(String(a.code))} ${R().escapeHTML(a.name)}</option>`).join('')}
                     </select>
                     <input type="number" class="journal-debit" data-line="${i}" step="0.01" min="0" placeholder="Debit" inputmode="decimal">
                     <input type="number" class="journal-credit" data-line="${i}" step="0.01" min="0" placeholder="Credit" inputmode="decimal">
@@ -390,7 +390,7 @@
      */
     function populateFormForEdit(entry) {
         State().setEditingEntryId(entry.id);
-        const info = global.FCL.Ledger.getSimpleDisplayInfo(entry);
+        const info = TransactionService().getSimpleDisplayInfo(entry);
         if (!info) return;
 
         // Switch to Add tab
