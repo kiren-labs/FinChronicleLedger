@@ -16,28 +16,31 @@ FinChronicleLedger is a **local-first, offline-first** personal finance tracker.
 | **Network** | Zero network requests after initial page load |
 | **Server** | No backend, no API, no analytics, no telemetry |
 | **Authentication** | None required — single-user local app |
-| **Third-party code** | Zero runtime dependencies |
-| **CDN** | None — all assets self-hosted including icon fonts |
+| **Third-party code** | Zero runtime dependencies. Icon fonts loaded from CDN with network-first caching. |
+| **CDN** | Remix Icon font loaded from jsdelivr CDN; all application code self-hosted |
 
 ### Input Validation
 
 - All user input is validated in the Domain layer (`validators.js`)
-- HTML tags are stripped from text inputs to prevent XSS
+- HTML tags are stripped from text inputs via a pure string-based sanitizer (no DOM dependency)
 - Amount inputs are bounded (min/max limits)
 - Note/description fields have length limits
 - Date inputs are range-checked
+- UUID generation uses `crypto.randomUUID()` with a `crypto.getRandomValues` (CSPRNG) fallback
 
 ### Content Security
 
+- Content-Security-Policy meta tag: `script-src 'self'`; restricts styles and fonts to self + CDN
 - No `eval()` or `Function()` constructors
-- No `innerHTML` with unsanitized user data
-- DOM content created via `textContent` or sanitized before insertion
-- No inline event handlers in HTML
+- All user-supplied content rendered via `innerHTML` is escaped through `Renderer.escapeHTML()` to prevent XSS
+- No inline event handlers in HTML — all listeners attached programmatically
+- Backup restore performs full structural validation, type coercion, string sanitization, and settings key whitelisting before importing any data
 
 ### Service Worker
 
-- Cache-first strategy serves known assets efficiently
-- Only same-origin requests are cached
+- Cache-first strategy serves known app shell assets efficiently
+- CDN resources (icon fonts) use a separate network-first cache to prevent stale/compromised responses persisting
+- Only same-origin requests are cached in the app shell cache
 - Cache is versioned and old caches are purged on updates
 
 ---
@@ -46,6 +49,7 @@ FinChronicleLedger is a **local-first, offline-first** personal finance tracker.
 
 | Version | Supported |
 |---------|-----------|
+| 1.1.x | :white_check_mark: |
 | 1.0.x | :white_check_mark: |
 
 ---

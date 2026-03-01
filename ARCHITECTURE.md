@@ -73,7 +73,7 @@ Lazy references (`() => global.FCL.X`) resolve dependencies at call-time rather 
 
 | Module | Responsibility |
 |--------|---------------|
-| `renderer.js` | Master `updateUI()` coordinator, mode-aware rendering, toast notifications, formatting helpers |
+| `renderer.js` | Master `updateUI()` coordinator, mode-aware rendering, toast notifications, formatting helpers, `escapeHTML()` utility, error boundaries |
 | `forms.js` | Simple Mode form (type toggle → amount → category → date) and Advanced Mode journal editor (multi-line debit/credit) |
 | `list.js` | Paginated transaction list with month filters, edit/delete actions |
 | `summary.js` | Dashboard tiles (income, expenses, net, count), MoM trends, expense ratio, net worth |
@@ -83,18 +83,18 @@ Lazy references (`() => global.FCL.X`) resolve dependencies at call-time rather 
 | `navigation.js` | Bottom nav tab switching, mode-aware tab visibility |
 | `settings-ui.js` | Settings panel: mode toggle, dark mode, currency, data export/import, FAQ |
 
-**Key pattern:** UI layer only calls Application services. It never calls Domain or Infrastructure directly.
+**Key pattern:** UI layer only calls Application services. It never calls Domain or Infrastructure directly. All user-supplied content rendered via `innerHTML` is escaped through `Renderer.escapeHTML()` to prevent XSS.
 
 ### Application Layer (`js/application/`)
 
 | Service | Responsibility |
 |---------|---------------|
 | `state.js` | In-memory state (entries, accounts, settings, current month/page). Notifies UI on changes via `updateUI()`. |
-| `transaction-service.js` | Create, edit, delete transactions. Builds journal entries from Simple Mode input. Validates via Domain. Persists via Infrastructure. |
+| `transaction-service.js` | Create, edit, delete transactions. Builds journal entries from Simple Mode input. Validates via Domain. Persists via Infrastructure. Provides display-info delegates for UI. |
 | `account-service.js` | CRUD for accounts. Seeds default Chart of Accounts on first run. |
-| `report-service.js` | Orchestrates report generation: monthly summaries, trial balance, budget health. Delegates math to Domain. |
+| `report-service.js` | Orchestrates report generation: monthly summaries, trial balance, budget health, top spending categories. Delegates math to Domain. |
 | `migration-service.js` | Imports FinChronicle v3 backup, maps categories → accounts, generates journal entries. |
-| `import-export-service.js` | CSV export/import, full JSON backup creation/restoration. |
+| `import-export-service.js` | CSV export/import, full JSON backup creation/restoration with comprehensive validation and sanitization of all imported data. |
 | `backup-service.js` | Tracks backup timestamps, 30-day reminder logic, backup status. |
 | `settings-service.js` | Currency, dark mode, UI mode (simple/advanced), install prompt. |
 
@@ -103,7 +103,7 @@ Lazy references (`() => global.FCL.X`) resolve dependencies at call-time rather 
 | Module | Responsibility |
 |--------|---------------|
 | `types.js` | Constants: account types, entry types, category maps, currency definitions, validation limits |
-| `validators.js` | Input validation: amounts, dates, notes length, XSS sanitization |
+| `validators.js` | Input validation: amounts, dates, notes length, pure XSS sanitization (no DOM dependency), CSPRNG-backed UUID generation |
 | `accounting.js` | Core accounting: balance calculations, trial balance verification, accounting equation checks |
 | `ledger.js` | Journal entry creation, debit/credit rules, entry transformation, display info extraction |
 | `chart-of-accounts.js` | 45 default accounts across 5 types, numbering scheme (1xxx–5xxx), account rules |
@@ -115,10 +115,10 @@ Lazy references (`() => global.FCL.X`) resolve dependencies at call-time rather 
 
 | Module | Responsibility |
 |--------|---------------|
-| `db.js` | IndexedDB wrapper: database initialization, schema migrations, CRUD for `journal_entries`, `accounts`, `app_settings` stores |
+| `db.js` | IndexedDB wrapper: database initialization, schema migrations, CRUD for `journal_entries`, `accounts`, `app_settings` stores. Pure I/O — no business logic (callers set timestamps). |
 | `storage.js` | localStorage wrapper for lightweight settings (currency, theme, version, backup timestamp, summary collapsed state) |
 | `file-io.js` | File operations: CSV generation, CSV parsing, file download triggers, file reading |
-| `sw.js` | Service Worker: precache all assets on install, cache-first fetch strategy, old cache cleanup on activate |
+| `sw.js` | Service Worker: precache all assets on install, cache-first fetch for app shell, network-first fetch for CDN resources (separate cache), old cache cleanup on activate |
 
 ---
 
@@ -243,8 +243,8 @@ All values reference CSS custom properties from `tokens.css`. Responsive breakpo
 ## PWA Strategy
 
 - **Install:** `manifest.json` with standalone display, portrait orientation, app shortcuts
-- **Caching:** Service Worker precaches all ~35 static assets on install
-- **Fetch:** Cache-first strategy for all same-origin GET requests; network fallback
+- **Caching:** Service Worker precaches all ~35 static assets on install. CDN resources (icons) use a separate network-first cache.
+- **Fetch:** Cache-first strategy for same-origin GET requests; network-first for CDN resources; network fallback for uncached same-origin
 - **Icons:** Self-hosted Remix Icon font (no CDN) for offline reliability
 - **Updates:** Version check on load, new SW detection triggers update prompt
 
@@ -255,9 +255,10 @@ All values reference CSS custom properties from `tokens.css`. Responsive breakpo
 | Concern | Mitigation |
 |---------|-----------|
 | Data privacy | All data in IndexedDB/localStorage — never transmitted |
-| XSS | Input sanitization in `validators.js` (strips HTML tags, limits length) |
-| Injection | No `eval()`, no `innerHTML` from user-controlled data without sanitization |
-| CDN dependency | All assets self-hosted, including icon fonts |
+| CSP | Content-Security-Policy meta tag: `script-src 'self'`, restricts styles/fonts to self + CDN |
+| XSS | All user-supplied `innerHTML` escaped via `Renderer.escapeHTML()`. Input sanitization in `validators.js` (pure string-based — no DOM). Backup restore validates and sanitizes all imported strings. |
+| Injection | No `eval()`, no `innerHTML` from user-controlled data without escaping. Content-Security-Policy meta tag enforces `script-src 'self'`. No inline event handlers. |
+| CDN dependency | Icon fonts loaded from CDN with network-first caching; all app code self-hosted |
 | HTTPS | Required for Service Worker; GitHub Pages provides it automatically |
 
 ---
