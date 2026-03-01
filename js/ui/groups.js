@@ -59,9 +59,7 @@
     // =====================================================================
 
     function _getTopCategories(month) {
-        const entries = State().getEntries();
-        const accounts = State().getAccounts();
-        return global.FCL.Reports.getTopSpendingCategories(month, entries, accounts, 5);
+        return ReportService().getTopSpendingCategories(month, 5);
     }
 
     function _renderTopCategories(categories) {
@@ -69,7 +67,7 @@
 
         const items = categories.map(c => `
             <div class="top-category-item">
-                <span class="category-name">${c.accountName}</span>
+                <span class="category-name">${R().escapeHTML(c.accountName)}</span>
                 <span class="category-amount">${R().formatCurrency(c.amount)}</span>
                 <span class="category-pct">${c.pct}%</span>
             </div>
@@ -114,7 +112,7 @@
 
         return `<div class="grouped-list">${categories.map(c => `
             <div class="group-item">
-                <span class="group-name">${c.accountName}</span>
+                <span class="group-name">${R().escapeHTML(c.accountName)}</span>
                 <span class="amount--expense">${R().formatCurrency(c.amount)}</span>
             </div>
         `).join('')}</div>`;

@@ -134,11 +134,11 @@
 
     /**
      * Update a single account.
+     * Caller must set updatedAt before calling.
      * @param {Object} account
      * @returns {Promise<void>}
      */
     async function updateAccount(account) {
-        account.updatedAt = new Date().toISOString();
         const tx = _tx('accounts', 'readwrite');
         tx.objectStore('accounts').put(account);
         return _promisifyTx(tx);

@@ -45,7 +45,7 @@
                 html += `
                     <div class="balance-row">
                         <span class="balance-code">${acc.code}</span>
-                        <span class="balance-name">${acc.name}</span>
+                        <span class="balance-name">${R().escapeHTML(acc.name)}</span>
                         <span class="balance-amount">${R().formatCurrency(acc.balance)}</span>
                     </div>
                 `;
@@ -70,8 +70,8 @@
     function _renderTrialBalance(tb) {
         let rowsHTML = tb.rows.map(r => `
             <tr>
-                <td>${r.code}</td>
-                <td>${r.name}</td>
+                <td>${R().escapeHTML(String(r.code))}</td>
+                <td>${R().escapeHTML(r.name)}</td>
                 <td class="text-right">${r.debit > 0 ? R().formatCurrency(r.debit) : ''}</td>
                 <td class="text-right">${r.credit > 0 ? R().formatCurrency(r.credit) : ''}</td>
             </tr>

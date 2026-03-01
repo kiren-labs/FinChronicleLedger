@@ -132,9 +132,12 @@
         if (!newName || newName.trim().length === 0) return { success: false, error: 'Name cannot be empty' };
         if (newName.length > 100) return { success: false, error: 'Name cannot exceed 100 characters' };
 
-        account.name = global.FCL.Validators.sanitizeHTML(newName.trim());
-        await DB().updateAccount(account);
-        State().updateAccount(account);
+        const updated = Object.assign({}, account, {
+            name: global.FCL.Validators.sanitizeHTML(newName.trim()),
+            updatedAt: new Date().toISOString(),
+        });
+        await DB().updateAccount(updated);
+        State().updateAccount(updated);
         return { success: true };
     }
 
@@ -148,9 +151,12 @@
         if (!account) return { success: false, error: 'Account not found' };
         if (account.isSystem) return { success: false, error: 'Cannot deactivate system accounts' };
 
-        account.isActive = false;
-        await DB().updateAccount(account);
-        State().updateAccount(account);
+        const updated = Object.assign({}, account, {
+            isActive: false,
+            updatedAt: new Date().toISOString(),
+        });
+        await DB().updateAccount(updated);
+        State().updateAccount(updated);
         return { success: true };
     }
 
@@ -163,9 +169,12 @@
         const account = getAccountById(id);
         if (!account) return { success: false, error: 'Account not found' };
 
-        account.isActive = true;
-        await DB().updateAccount(account);
-        State().updateAccount(account);
+        const updated = Object.assign({}, account, {
+            isActive: true,
+            updatedAt: new Date().toISOString(),
+        });
+        await DB().updateAccount(updated);
+        State().updateAccount(updated);
         return { success: true };
     }
 
