@@ -36,6 +36,8 @@
 
         const incomeDelta = Reports().getMoMDelta(totals.income, prevTotals.income);
         const expenseDelta = Reports().getMoMDelta(totals.expense, prevTotals.expense);
+        const netDelta = Reports().getMoMDelta(totals.net, prevTotals.net);
+        const countDelta = Reports().getMoMDelta(totals.count, prevTotals.count);
 
         return {
             month,
@@ -46,6 +48,8 @@
             expensePercentage: expensePct,
             incomeDelta,
             expenseDelta,
+            netDelta,
+            countDelta,
             topCategories,
             budgetHealth,
         };

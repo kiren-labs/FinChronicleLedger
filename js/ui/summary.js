@@ -29,6 +29,8 @@
         const netClass = insights.net >= 0 ? 'amount--income' : 'amount--expense';
         const incomeDeltaHTML = _deltaHTML(insights.incomeDelta);
         const expenseDeltaHTML = _deltaHTML(insights.expenseDelta);
+        const netDeltaHTML = _deltaHTML(insights.netDelta);
+        const countDeltaHTML = _deltaHTML(insights.countDelta);
 
         container.innerHTML = `
             <div class="summary ${collapsed ? 'summary--collapsed' : ''}">
@@ -63,15 +65,21 @@
                         <div class="tile">
                             <span class="tile-label">Net</span>
                             <span class="tile-value ${netClass}">${R().formatCurrency(insights.net)}</span>
+                            ${netDeltaHTML}
                         </div>
                         <div class="tile">
                             <span class="tile-label">Entries</span>
                             <span class="tile-value">${insights.count}</span>
+                            ${countDeltaHTML}
                         </div>
                     </div>
                     ${insights.expensePercentage !== null ? `
-                    <div class="summary-ratio">
-                        Expense-to-Income: <strong>${insights.expensePercentage}%</strong>
+                    <div class="summary-ratio ${insights.expensePercentage >= 100 ? 'ratio--over' : insights.expensePercentage >= 75 ? 'ratio--approaching' : 'ratio--ok'}">
+                        <div class="summary-ratio-header">
+                            <span class="summary-ratio-label">Expense-to-Income</span>
+                            <span class="summary-ratio-pct">${insights.expensePercentage}%</span>
+                        </div>
+                        <div class="budget-bar"><div class="budget-bar-fill" data-pct="${Math.min(insights.expensePercentage, 100)}"></div></div>
                     </div>` : ''}
                     ${mode === 'advanced' ? _renderNetWorth() : ''}
                     ${_renderBudgetWidget()}
