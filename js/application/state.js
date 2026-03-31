@@ -92,6 +92,7 @@
     let _currentCategory = null;
     let _currentPage = 1;
     let _editingEntryId = null;
+    let _searchQuery = '';
 
     function getCurrentMonth() {
         return _currentMonth || new Date().toISOString().slice(0, 7);
@@ -106,6 +107,13 @@
 
     function getEditingEntryId() { return _editingEntryId; }
     function setEditingEntryId(id) { _editingEntryId = id; }
+
+    function getSearchQuery() { return _searchQuery; }
+    function setSearchQuery(q) {
+        _searchQuery = q;
+        _currentPage = 1;
+        _notify();
+    }
 
     // =====================================================================
     // Change Notification (Observer pattern)
@@ -138,6 +146,7 @@
         getCurrentCategory, setCurrentCategory,
         getCurrentPage, setCurrentPage,
         getEditingEntryId, setEditingEntryId,
+        getSearchQuery, setSearchQuery,
         // Observer
         subscribe,
     };
