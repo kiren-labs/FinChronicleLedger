@@ -7,7 +7,7 @@
     'use strict';
 
     const DB_NAME = 'FinChronicleLedgerDB';
-    const DB_VERSION = 2;
+    const DB_VERSION = 3;
 
     let _db = null;
 
@@ -66,6 +66,14 @@
                         const historyStore = db.createObjectStore('recurring_history', { keyPath: 'id' });
                         historyStore.createIndex('templateId', 'templateId', { unique: false });
                         historyStore.createIndex('dueDate', 'dueDate', { unique: false });
+                    }
+                }
+
+                // === v3: budgets ===
+                if (oldVersion < 3) {
+                    if (!db.objectStoreNames.contains('budgets')) {
+                        const budgetStore = db.createObjectStore('budgets', { keyPath: 'id' });
+                        budgetStore.createIndex('month', 'month', { unique: true });
                     }
                 }
             };
@@ -336,6 +344,33 @@
     }
 
     // =====================================================================
+    // Budgets CRUD
+    // =====================================================================
+
+    async function saveBudget(budget) {
+        const tx = _tx('budgets', 'readwrite');
+        tx.objectStore('budgets').put(budget);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllBudgets() {
+        const tx = _tx('budgets', 'readonly');
+        return _promisify(tx.objectStore('budgets').getAll());
+    }
+
+    async function getBudgetByMonth(month) {
+        const tx = _tx('budgets', 'readonly');
+        const index = tx.objectStore('budgets').index('month');
+        return _promisify(index.get(month));
+    }
+
+    async function deleteBudget(id) {
+        const tx = _tx('budgets', 'readwrite');
+        tx.objectStore('budgets').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    // =====================================================================
     // Export
     // =====================================================================
     global.FCL = global.FCL || {};
@@ -368,6 +403,11 @@
         saveRecurringHistory,
         getAllRecurringHistory,
         getRecurringHistoryByTemplate,
+        // Budgets
+        saveBudget,
+        getAllBudgets,
+        getBudgetByMonth,
+        deleteBudget,
     };
 
 })(window);
