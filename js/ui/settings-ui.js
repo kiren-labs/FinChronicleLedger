@@ -10,6 +10,9 @@
     const Settings = () => global.FCL.SettingsService;
     const BackupService = () => global.FCL.BackupService;
     const ImportExport = () => global.FCL.ImportExportService;
+    const RecurringService = () => global.FCL.RecurringService;
+    const RecurringDomain = () => global.FCL.Recurring;
+    const AccountService = () => global.FCL.AccountService;
     const FileIO = () => global.FCL.FileIO;
     const R = () => global.FCL.UI.Renderer;
     const Modals = () => global.FCL.UI.Modals;
@@ -83,6 +86,15 @@
                     : '<p class="text-warning">No backup created yet. Please backup your data regularly.</p>'
                 }
                 ${backupStatus.reminderDue ? '<p class="text-warning">⚠ Backup recommended — it\'s been a while!</p>' : ''}
+            </div>
+
+            <!-- Recurring Transactions -->
+            <div class="settings-section">
+                <h3>Recurring Transactions</h3>
+                ${_renderRecurringList()}
+                <button class="btn btn--secondary btn--full" id="add-recurring">
+                    <i class="ri-add-line"></i> Create Recurring Transaction
+                </button>
             </div>
 
             <!-- About -->
@@ -199,6 +211,226 @@
                 fileInput.value = ''; // Reset
             });
         }
+
+        // Add recurring
+        const addRecurringBtn = document.getElementById('add-recurring');
+        if (addRecurringBtn) {
+            addRecurringBtn.addEventListener('click', () => _showRecurringForm());
+        }
+
+        // Recurring template actions
+        document.querySelectorAll('.recurring-pause-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.dataset.id;
+                const template = RecurringService().getTemplateById(id);
+                if (template) {
+                    await RecurringService().toggleTemplate(id, !template.isActive);
+                    render();
+                }
+            });
+        });
+
+        document.querySelectorAll('.recurring-delete-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.dataset.id;
+                if (confirm('Delete this recurring template?')) {
+                    await RecurringService().deleteTemplate(id);
+                    render();
+                }
+            });
+        });
+    }
+
+    // =====================================================================
+    // Recurring Templates UI
+    // =====================================================================
+
+    function _renderRecurringList() {
+        const templates = RecurringService().getTemplates();
+        if (templates.length === 0) {
+            return '<p class="text-muted">No recurring transactions set up yet.</p>';
+        }
+
+        const labels = RecurringDomain().FREQUENCY_LABELS;
+        return templates.map(t => {
+            const statusClass = t.isActive ? 'recurring-active' : 'recurring-paused';
+            const statusLabel = t.isActive ? (t.autoCreate ? 'Auto' : 'Reminder') : 'Paused';
+            const acc = t.categoryAccountId ? AccountService().getAccountById(t.categoryAccountId) : null;
+            const catName = acc ? R().escapeHTML(acc.name) : (t.type === 'transfer' ? 'Transfer' : '');
+
+            return `
+                <div class="recurring-item ${statusClass}">
+                    <div class="recurring-item-header">
+                        <strong>${R().escapeHTML(t.name)}</strong>
+                        <span class="recurring-amount">${R().formatCurrency(t.amount)}</span>
+                    </div>
+                    <div class="recurring-item-meta">
+                        <span class="transaction-badge recurring-badge-${t.type}">${R().escapeHTML(t.type)}</span>
+                        <span>${catName}</span>
+                        <span>${labels[t.frequency] || t.frequency}</span>
+                        <span class="recurring-status-badge">${statusLabel}</span>
+                    </div>
+                    ${t.nextDueDate ? `<div class="recurring-next-due">Next: ${R().formatDate(t.nextDueDate)}</div>` : ''}
+                    <div class="recurring-item-actions">
+                        <button class="btn btn--small btn--ghost recurring-pause-btn" data-id="${R().escapeHTML(t.id)}">${t.isActive ? 'Pause' : 'Resume'}</button>
+                        <button class="btn btn--small btn--ghost btn--danger recurring-delete-btn" data-id="${R().escapeHTML(t.id)}">Delete</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function _showRecurringForm() {
+        const mount = document.getElementById('modalMount');
+        if (!mount) return;
+
+        const today = new Date().toISOString().slice(0, 10);
+        const expenseCategories = Types().SimpleCategories.expense;
+        const incomeCategories = Types().SimpleCategories.income;
+        const assetAccounts = AccountService().getActiveAccountsByType('asset');
+        const liabilityAccounts = AccountService().getActiveAccountsByType('liability');
+        const transferAccounts = [...assetAccounts, ...liabilityAccounts];
+
+        mount.innerHTML = `
+            <div class="modal-overlay" id="recurring-modal-overlay">
+                <div class="modal recurring-modal">
+                    <h3>Create Recurring Transaction</h3>
+                    <form id="recurring-form">
+                        <div class="form-group">
+                            <label for="rec-name">Name</label>
+                            <input type="text" id="rec-name" maxlength="100" required placeholder="e.g., Monthly Rent">
+                        </div>
+                        <div class="form-group">
+                            <label for="rec-type">Type</label>
+                            <select id="rec-type" required>
+                                <option value="expense">Expense</option>
+                                <option value="income">Income</option>
+                                <option value="transfer">Transfer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="rec-amount">Amount</label>
+                            <input type="number" id="rec-amount" step="0.01" min="0.01" required placeholder="0.00" inputmode="decimal">
+                        </div>
+                        <div class="form-group" id="rec-category-group">
+                            <label for="rec-category">Category</label>
+                            <select id="rec-category" required>
+                                ${expenseCategories.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group" id="rec-from-group" style="display:none">
+                            <label for="rec-from">From Account</label>
+                            <select id="rec-from">
+                                ${transferAccounts.map(a => `<option value="${R().escapeHTML(a.id)}">${R().escapeHTML(a.name)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group" id="rec-to-group" style="display:none">
+                            <label for="rec-to">To Account</label>
+                            <select id="rec-to">
+                                ${transferAccounts.map(a => `<option value="${R().escapeHTML(a.id)}">${R().escapeHTML(a.name)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="rec-frequency">Frequency</label>
+                            <select id="rec-frequency" required>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly" selected>Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="rec-start">Start Date</label>
+                            <input type="date" id="rec-start" value="${today}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="rec-end">End Date (optional)</label>
+                            <input type="date" id="rec-end">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="rec-auto" checked>
+                                Create automatically (otherwise reminder only)
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="rec-notes">Notes (optional)</label>
+                            <input type="text" id="rec-notes" maxlength="500" placeholder="Notes">
+                        </div>
+                        <button type="submit" class="btn btn--primary btn--full">Save Template</button>
+                        <button type="button" class="btn btn--secondary btn--full" id="rec-cancel">Cancel</button>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        // Type toggle → show/hide category vs transfer fields
+        const typeSelect = document.getElementById('rec-type');
+        typeSelect.addEventListener('change', () => {
+            const type = typeSelect.value;
+            document.getElementById('rec-category-group').style.display = type === 'transfer' ? 'none' : '';
+            document.getElementById('rec-from-group').style.display = type === 'transfer' ? '' : 'none';
+            document.getElementById('rec-to-group').style.display = type === 'transfer' ? '' : 'none';
+
+            // Swap category options
+            if (type !== 'transfer') {
+                const cats = type === 'income' ? incomeCategories : expenseCategories;
+                document.getElementById('rec-category').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+        });
+
+        // Cancel
+        document.getElementById('rec-cancel').addEventListener('click', () => {
+            mount.innerHTML = '';
+        });
+
+        // Overlay click to close
+        document.getElementById('recurring-modal-overlay').addEventListener('click', (e) => {
+            if (e.target.id === 'recurring-modal-overlay') mount.innerHTML = '';
+        });
+
+        // Submit
+        document.getElementById('recurring-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const type = typeSelect.value;
+            const params = {
+                name: document.getElementById('rec-name').value,
+                type: type,
+                amount: parseFloat(document.getElementById('rec-amount').value),
+                frequency: document.getElementById('rec-frequency').value,
+                startDate: document.getElementById('rec-start').value,
+                endDate: document.getElementById('rec-end').value || null,
+                autoCreate: document.getElementById('rec-auto').checked,
+                notes: document.getElementById('rec-notes').value,
+            };
+
+            if (type === 'transfer') {
+                params.fromAccountId = document.getElementById('rec-from').value;
+                params.toAccountId = document.getElementById('rec-to').value;
+            } else {
+                const categoryName = document.getElementById('rec-category').value;
+                const categoryCode = Types().CategoryAccountMap[categoryName];
+                const categoryAccount = AccountService().getAccountByCode(categoryCode);
+                const assetAccount = AccountService().getDefaultAssetAccount();
+                if (!categoryAccount || !assetAccount) {
+                    R().showToast('Account mapping error', 'error');
+                    return;
+                }
+                params.categoryAccountId = categoryAccount.id;
+                params.assetAccountId = assetAccount.id;
+            }
+
+            const result = await RecurringService().createTemplate(params);
+            if (result.success) {
+                R().showToast('Recurring template created!', 'success');
+                mount.innerHTML = '';
+                render();
+            } else {
+                R().showToast(result.errors[0] || 'Error creating template', 'error');
+            }
+        });
     }
 
     // =====================================================================
