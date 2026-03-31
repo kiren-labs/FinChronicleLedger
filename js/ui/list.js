@@ -172,7 +172,14 @@
             `;
         }
 
+        // Search result count
+        let searchResultHTML = '';
+        if (searching) {
+            searchResultHTML = `<div class="search-result-count">${entries.length} result${entries.length !== 1 ? 's' : ''} for "${R().escapeHTML(searchQuery)}"</div>`;
+        }
+
         container.innerHTML = `
+            ${searchResultHTML}
             <div class="transaction-list">${html}</div>
             ${paginationHTML}
         `;
