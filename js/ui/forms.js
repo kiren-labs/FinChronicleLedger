@@ -568,6 +568,13 @@
                 await TagService().setEntryTags(result.entry.id, _selectedTagIds.slice());
             }
 
+            // Save payee on entry
+            if (_selectedPayeeId && result.entry) {
+                result.entry.payeeId = _selectedPayeeId;
+                await global.FCL.DB.saveJournalEntry(result.entry);
+                State().updateEntry(result.entry);
+            }
+
             R().showToast(editingId ? 'Transaction updated!' : 'Transaction added!', 'success');
 
             // Budget alert check (on expense create/edit)
@@ -589,6 +596,7 @@
 
             State().setEditingEntryId(null);
             _selectedTagIds = [];
+            _selectedPayeeId = null;
             resetForm();
         } else {
             R().showToast(result.errors[0] || 'Error saving transaction', 'error');
