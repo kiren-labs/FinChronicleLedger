@@ -35,6 +35,7 @@ const CACHED_URLS = [
     './js/application/import-export-service.js',
     './js/application/backup-service.js',
     './js/application/settings-service.js',
+    './js/application/search-service.js',
     './js/ui/renderer.js',
     './js/ui/forms.js',
     './js/ui/list.js',
