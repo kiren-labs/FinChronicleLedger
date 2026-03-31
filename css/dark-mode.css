@@ -762,3 +762,37 @@
 [data-theme="dark"] .account-badge--inactive {
     background: rgba(230, 81, 0, 0.15);
 }
+
+/* Tags */
+[data-theme="dark"] .tag-row:hover {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .tag-color--selected {
+    border-color: var(--color-text);
+}
+
+[data-theme="dark"] .tag-filter-select {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+/* CSV Import */
+[data-theme="dark"] .csv-preview-panel {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .csv-preview-table th {
+    background: var(--color-bg);
+}
+
+[data-theme="dark"] .csv-errors {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Merge Restore */
+[data-theme="dark"] .merge-preview-stats {
+    background: var(--color-surface);
+}

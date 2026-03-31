@@ -40,6 +40,8 @@ const CACHED_URLS = [
     './js/application/search-service.js',
     './js/application/recurring-service.js',
     './js/application/budget-service.js',
+    './js/application/tag-service.js',
+    './js/application/csv-import-service.js',
     './js/ui/renderer.js',
     './js/ui/forms.js',
     './js/ui/list.js',

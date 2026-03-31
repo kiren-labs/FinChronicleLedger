@@ -71,12 +71,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New service methods: `addAccount()`, `deleteAccount()`, `getNextAccountCode()`
 - New infrastructure: `DB.deleteAccount()`, `State.addAccount()`, `State.removeAccount()`
 
+#### Tags & Custom Categories (P1)
+- **Tag management** in Settings — create, rename, recolor, and delete tags
+- **10-color palette** picker for tag color selection
+- **Tag picker** in transaction forms — toggle tags on/off as chips before saving
+- **Tag badges** displayed on transactions in the list view (simple, advanced, and split items)
+- **Tag filter** dropdown in the list filter bar — filter transactions by tag across all views
+- Tags persist on transactions across edit/delete cycles
+- Tag deletion cascades — removes tag reference from all tagged transactions
+- Tag usage count shown in Settings management list
+- IndexedDB upgraded to v4 with `tags` store (unique name index)
+- New service: `js/application/tag-service.js` — full CRUD, tag-entry association, usage counts, tag reports
+
+#### CSV Import (P1)
+- **Import CSV** button in Settings Data section triggers file picker
+- CSV parser handles quoted fields, escaped quotes, and flexible headers
+- Required headers: `date`, `amount`, `type`, `category`; optional: `notes`/`description`
+- **Preview panel** shows valid row count, sample data table, and error list before importing
+- Validates categories against Chart of Accounts (by name or CategoryAccountMap)
+- Imports as standard double-entry transactions via TransactionService
+- New service: `js/application/csv-import-service.js` — parse, validate, import pipeline
+
+#### Merge Restore (P1)
+- **Restore strategy selection** — choose between "Replace All" (destructive) and "Merge" (non-destructive)
+- **Merge preview** modal shows count of new entries, duplicate entries to skip, new accounts, and new tags
+- Merge imports only non-duplicate entries (matched by ID), preserving all existing data
+- New accounts, entries, and tags from backup are sanitized before merge
+- Full backup now includes tags in the JSON export
+- New methods: `previewMerge()`, `mergeFromBackup()` in ImportExportService
+
 ### Changed
 
-- **Service Worker**: Added `search-service.js`, `recurring.js`, `recurring-service.js`, `budget.js`, `budget-service.js` to `CACHED_URLS` for offline availability
+- **Service Worker**: Added `search-service.js`, `recurring.js`, `recurring-service.js`, `budget.js`, `budget-service.js`, `tag-service.js`, `csv-import-service.js` to `CACHED_URLS` for offline availability
 - **Service Worker**: Bumped `CACHE_NAME` and `CDN_CACHE_NAME` to `v1.2.0`
-- **App startup**: Now loads recurring templates, processes missed recurring entries, and loads budgets after first render
+- **App startup**: Now loads recurring templates, processes missed recurring entries, loads budgets, and loads tags after first render
 - **Transaction form**: Shows budget alert toast after adding/editing expense transactions
+- **Full backup JSON**: Now includes `tags` array alongside accounts, entries, and settings
+- **Restore from backup**: Now restores tags and supports merge strategy selection (replace-all vs merge)
 
 ### Fixed
 
