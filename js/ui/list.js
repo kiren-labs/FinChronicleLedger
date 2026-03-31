@@ -70,7 +70,7 @@
                 ${searching ? '<div class="search-status">Searching across all months</div>' : ''}
             </div>
             <div class="filters">
-                <div class="filter-months"${searching ? ' style="opacity:0.5;pointer-events:none"' : ''}>${monthButtons}</div>
+                <div class="filter-months${searching ? ' filter-disabled' : ''}">${monthButtons}</div>
             </div>
         `;
 

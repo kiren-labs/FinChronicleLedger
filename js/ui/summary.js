@@ -91,6 +91,11 @@
 
         // Bind recurring confirm/skip actions
         _bindRecurringActions();
+
+        // Apply budget bar widths programmatically (CSP blocks inline style attributes)
+        container.querySelectorAll('.budget-bar-fill[data-pct]').forEach(function (el) {
+            el.style.width = el.dataset.pct + '%';
+        });
     }
 
     function _deltaHTML(delta) {
@@ -137,7 +142,7 @@
             html += '<span>' + R().formatCurrency(status.totalSpent) + ' / ' + R().formatCurrency(status.overallBudget) + '</span>';
             html += '<span>' + status.overallPercentage + '%</span>';
             html += '</div>';
-            html += '<div class="budget-bar"><div class="budget-bar-fill" style="width:' + Math.min(status.overallPercentage, 100) + '%"></div></div>';
+            html += '<div class="budget-bar"><div class="budget-bar-fill" data-pct="' + Math.min(status.overallPercentage, 100) + '"></div></div>';
             html += '<div class="budget-overall-meta">';
             html += '<span>' + R().formatCurrency(Math.max(0, status.overallRemaining)) + ' remaining</span>';
             html += '<span>' + daysLeft + ' days left &middot; ' + R().formatCurrency(dailyAllowance) + '/day</span>';
@@ -160,7 +165,7 @@
                 html += '<div class="budget-alert-item ' + cls + '">';
                 html += '<span class="budget-alert-name">' + name + '</span>';
                 html += '<span class="budget-alert-pct">' + cb.percentageUsed + '%</span>';
-                html += '<div class="budget-bar budget-bar-sm"><div class="budget-bar-fill" style="width:' + Math.min(cb.percentageUsed, 100) + '%"></div></div>';
+                html += '<div class="budget-bar budget-bar-sm"><div class="budget-bar-fill" data-pct="' + Math.min(cb.percentageUsed, 100) + '"></div></div>';
                 html += '</div>';
             }
             html += '</div>';

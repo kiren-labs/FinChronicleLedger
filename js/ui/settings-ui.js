@@ -76,7 +76,7 @@
                         <i class="ri-upload-line"></i> Restore from Backup
                     </button>
                 </div>
-                <input type="file" id="restore-file-input" accept=".json" style="display:none">
+                <input type="file" id="restore-file-input" accept=".json" class="hidden">
             </div>
 
             <!-- Backup Status -->
@@ -137,6 +137,13 @@
         `;
 
         _bindSettingsEvents();
+        _applyBarWidths(container);
+    }
+
+    function _applyBarWidths(root) {
+        root.querySelectorAll('.budget-bar-fill[data-pct]').forEach(function (el) {
+            el.style.width = el.dataset.pct + '%';
+        });
     }
 
     // =====================================================================
@@ -334,13 +341,13 @@
                                 ${expenseCategories.map(c => `<option value="${c}">${c}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="form-group" id="rec-from-group" style="display:none">
+                        <div class="form-group hidden" id="rec-from-group">
                             <label for="rec-from">From Account</label>
                             <select id="rec-from">
                                 ${transferAccounts.map(a => `<option value="${R().escapeHTML(a.id)}">${R().escapeHTML(a.name)}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="form-group" id="rec-to-group" style="display:none">
+                        <div class="form-group hidden" id="rec-to-group">
                             <label for="rec-to">To Account</label>
                             <select id="rec-to">
                                 ${transferAccounts.map(a => `<option value="${R().escapeHTML(a.id)}">${R().escapeHTML(a.name)}</option>`).join('')}
@@ -385,9 +392,9 @@
         const typeSelect = document.getElementById('rec-type');
         typeSelect.addEventListener('change', () => {
             const type = typeSelect.value;
-            document.getElementById('rec-category-group').style.display = type === 'transfer' ? 'none' : '';
-            document.getElementById('rec-from-group').style.display = type === 'transfer' ? '' : 'none';
-            document.getElementById('rec-to-group').style.display = type === 'transfer' ? '' : 'none';
+            document.getElementById('rec-category-group').classList.toggle('hidden', type === 'transfer');
+            document.getElementById('rec-from-group').classList.toggle('hidden', type !== 'transfer');
+            document.getElementById('rec-to-group').classList.toggle('hidden', type !== 'transfer');
 
             // Swap category options
             if (type !== 'transfer') {
@@ -468,7 +475,7 @@
             overallHTML = '<div class="budget-overall ' + statusClass + '">'
                 + '<span>Overall: ' + R().formatCurrency(status.overallBudget) + ' budget</span>'
                 + '<span>' + R().formatCurrency(status.totalSpent) + ' spent (' + status.overallPercentage + '%)</span>'
-                + '<div class="budget-bar"><div class="budget-bar-fill" style="width:' + Math.min(status.overallPercentage, 100) + '%"></div></div>'
+                + '<div class="budget-bar"><div class="budget-bar-fill" data-pct="' + Math.min(status.overallPercentage, 100) + '"></div></div>'
                 + '</div>';
         }
 
@@ -483,7 +490,7 @@
                 + '<span class="budget-cat-name">' + name + '</span>'
                 + '<span class="budget-cat-amounts">' + R().formatCurrency(cb.spentAmount) + ' / ' + R().formatCurrency(cb.budgetAmount) + '</span>'
                 + '</div>'
-                + '<div class="budget-bar"><div class="budget-bar-fill" style="width:' + Math.min(cb.percentageUsed, 100) + '%"></div></div>'
+                + '<div class="budget-bar"><div class="budget-bar-fill" data-pct="' + Math.min(cb.percentageUsed, 100) + '"></div></div>'
                 + '<span class="budget-cat-pct">' + cb.percentageUsed + '% — ' + _budgetStatusLabel(cb.status) + '</span>'
                 + '</div>';
         }).join('');

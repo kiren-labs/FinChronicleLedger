@@ -3819,3 +3819,16 @@ details.faq-item p {
     color: var(--color-text);
     text-align: right;
 }
+
+/* =====================================================================
+   Utility classes
+   ===================================================================== */
+
+.hidden {
+    display: none !important;
+}
+
+.filter-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
