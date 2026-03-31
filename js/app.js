@@ -55,15 +55,17 @@
             await SettingsService().loadSettings();
             console.log('[FCL] Settings loaded');
 
-            // 5. Apply theme
-            SettingsService().applyTheme();
+            // 5. Apply theme — pass current saved setting explicitly
+            SettingsService().applyTheme(State().getSetting('darkMode') || 'disabled');
 
             // 6. Apply UI mode
             const mode = SettingsService().getUIMode();
             document.documentElement.setAttribute('data-mode', mode);
 
-            // 7. Check version
+            // 7. Check version + set version label in UI
             await SettingsService().checkVersion();
+            const versionEl = document.getElementById('appVersion');
+            if (versionEl) versionEl.textContent = 'v' + Types().APP_VERSION;
 
             // 8. Subscribe State changes → UI re-render
             State().subscribe(() => {

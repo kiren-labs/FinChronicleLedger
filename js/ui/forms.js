@@ -12,12 +12,14 @@
     const TransactionService = () => global.FCL.TransactionService;
     const BudgetService = () => global.FCL.BudgetService;
     const TagService = () => global.FCL.TagService;
+    const PayeeService = () => global.FCL.PayeeService;
     const R = () => global.FCL.UI.Renderer;
 
     let _advancedLines = 2; // Number of journal lines in advanced editor
     let _splitMode = false; // Whether split transaction mode is active
     let _splitLines = 2;    // Number of split lines in simple mode
     let _selectedTagIds = []; // Tag IDs selected for current transaction
+    let _selectedPayeeId = null; // Payee ID selected for current transaction
 
     // =====================================================================
     // Render
@@ -94,6 +96,7 @@
                         <label for="notes">Notes (optional)</label>
                         <input type="text" id="notes" maxlength="500" placeholder="Transfer notes">
                     </div>
+                    ${_renderPayeeField()}
                     ${_renderTagPicker()}
                     <button type="submit" class="btn btn--primary btn--full">${isEditing ? 'Update Transfer' : 'Transfer'}</button>
                     ${isEditing ? '<button type="button" class="btn btn--secondary btn--full" id="cancel-edit">Cancel</button>' : ''}
@@ -157,6 +160,7 @@
                         <label for="notes">Notes (optional)</label>
                         <input type="text" id="notes" maxlength="500" placeholder="Add a note">
                     </div>
+                    ${_renderPayeeField()}
                     ${_renderTagPicker()}
                     ${!_splitMode && !isEditing ? '<button type="button" class="btn btn--ghost btn--small split-toggle-btn" id="toggle-split"><i class="ri-scissors-line"></i> Split this transaction</button>' : ''}
                     <button type="submit" class="btn btn--primary btn--full">${isEditing ? 'Update Transaction' : 'Add Transaction'}</button>
@@ -234,6 +238,9 @@
         // Tag chips
         _bindTagEvents();
 
+        // Payee autocomplete
+        _bindPayeeEvents();
+
         // Cancel edit
         const cancelBtn = document.getElementById('cancel-edit');
         if (cancelBtn) {
@@ -271,6 +278,89 @@
         }).join('');
 
         return '<div class="form-group"><label>Tags</label><div class="tag-picker">' + chips + '</div></div>';
+    }
+
+    // =====================================================================
+    // Payee Autocomplete
+    // =====================================================================
+
+    function _renderPayeeField() {
+        if (!PayeeService()) return '';
+        var payee = _selectedPayeeId ? PayeeService().getPayeeById(_selectedPayeeId) : null;
+        var displayVal = payee ? R().escapeHTML(payee.name) : '';
+
+        return '<div class="form-group payee-field">'
+            + '<label for="payee-input">Payee (optional)</label>'
+            + '<div class="payee-autocomplete">'
+            + '<input type="text" id="payee-input" autocomplete="off" maxlength="100" placeholder="Who did you pay?" value="' + displayVal + '">'
+            + '<div class="payee-dropdown hidden" id="payee-dropdown"></div>'
+            + '</div>'
+            + '</div>';
+    }
+
+    function _bindPayeeEvents() {
+        var input = document.getElementById('payee-input');
+        var dropdown = document.getElementById('payee-dropdown');
+        if (!input || !dropdown || !PayeeService()) return;
+
+        input.addEventListener('input', function () {
+            var query = input.value.trim();
+            if (query.length < 1) {
+                dropdown.classList.add('hidden');
+                _selectedPayeeId = null;
+                return;
+            }
+            var matches = PayeeService().autocomplete(query, 5);
+            if (matches.length === 0) {
+                // Offer to create new
+                dropdown.innerHTML = '<div class="payee-option payee-create" data-action="create">'
+                    + '<i class="ri-add-line"></i> Create &ldquo;' + R().escapeHTML(query) + '&rdquo;'
+                    + '</div>';
+            } else {
+                dropdown.innerHTML = matches.map(function (p) {
+                    return '<div class="payee-option" data-payee-id="' + R().escapeHTML(p.id) + '">'
+                        + R().escapeHTML(p.name) + '</div>';
+                }).join('');
+                // Also offer create if no exact match
+                var exact = matches.some(function (p) { return p.name.toLowerCase() === query.toLowerCase(); });
+                if (!exact) {
+                    dropdown.innerHTML += '<div class="payee-option payee-create" data-action="create">'
+                        + '<i class="ri-add-line"></i> Create &ldquo;' + R().escapeHTML(query) + '&rdquo;'
+                        + '</div>';
+                }
+            }
+            dropdown.classList.remove('hidden');
+
+            // Bind dropdown option clicks
+            dropdown.querySelectorAll('.payee-option').forEach(function (opt) {
+                opt.addEventListener('click', async function () {
+                    if (opt.dataset.action === 'create') {
+                        var result = await PayeeService().findOrCreate(input.value.trim());
+                        if (result.success) {
+                            _selectedPayeeId = result.payee.id;
+                            input.value = result.payee.name;
+                        }
+                    } else {
+                        _selectedPayeeId = opt.dataset.payeeId;
+                        var p = PayeeService().getPayeeById(_selectedPayeeId);
+                        input.value = p ? p.name : '';
+                    }
+                    dropdown.classList.add('hidden');
+                });
+            });
+        });
+
+        // Hide dropdown on blur (with delay for click)
+        input.addEventListener('blur', function () {
+            setTimeout(function () { dropdown.classList.add('hidden'); }, 200);
+        });
+
+        // Show dropdown on focus if has value
+        input.addEventListener('focus', function () {
+            if (input.value.trim().length >= 1) {
+                input.dispatchEvent(new Event('input'));
+            }
+        });
     }
 
     function _bindTagEvents() {
