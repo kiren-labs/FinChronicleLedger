@@ -694,3 +694,21 @@
     background: var(--color-text-muted);
     color: var(--color-surface);
 }
+
+/* Split Transactions */
+[data-theme="dark"] .split-container {
+    background: var(--color-bg);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .split-line select,
+[data-theme="dark"] .split-line input {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .split-badge {
+    background: rgba(0, 81, 213, 0.2);
+    color: var(--color-primary-strong);
+}

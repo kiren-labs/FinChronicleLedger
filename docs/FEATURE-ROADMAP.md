@@ -59,7 +59,7 @@ All features maintain the app's core principles:
 |---|---------|----------|------------|--------|---------|-------|
 | 1 | Recurring Transactions | P0 | Medium | High | v1.2.0 | Gap #1; check on startup only |
 | 2 | Budget Planning & Tracking | P0 | Medium | High | v1.2.0 | Gap #2 |
-| 3 | Split Transactions | P0 | Low | High | v1.2.0 | UI-only; no schema change |
+| 3 | Split Transactions | P0 | Low | High | v1.2.0 | ✅ Implemented — UI-only; no schema change |
 | 4 | Search (Full-Text) | P0 | Low | High | v1.2.0 | ✅ Implemented — Gap #3a; no new store |
 | 5 | Tags & Custom Categories | P1 | Low | Medium | v1.2.0 | Gap #3b |
 | 6 | Undo / Delete Recovery | P1 | Low | High | v1.2.0 | No schema change |
@@ -1385,7 +1385,7 @@ View all accounts at once, consolidated balance sheet, inter-account transfers v
 ### v1.2.0 (Q2 2026)
 - Recurring Transactions (P0)
 - Budget Planning & Tracking (P0)
-- Split Transactions (P0) — UI only, no schema change
+- ~~Split Transactions (P0) — UI only, no schema change~~ ✅ Implemented
 - ~~Search / Full-Text (P0) — no new store~~ ✅ Implemented
 - Tags & Custom Categories (P1)
 - Undo / Delete Recovery (P1)
