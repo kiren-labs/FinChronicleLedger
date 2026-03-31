@@ -224,6 +224,32 @@ Users can switch modes freely from Settings. Both modes use the same underlying 
 
 ---
 
+## Testing (Zero Dependency)
+
+This project keeps the core architecture dependency-free. Service-layer tests use Node's built-in test runner (`node:test`) and require no npm packages.
+
+Run all service tests:
+
+```bash
+node --test tests/*.test.js
+```
+
+Run a single suite:
+
+```bash
+node --test tests/payee-service.test.js
+node --test tests/goal-service.test.js
+node --test tests/reconciliation-service.test.js
+```
+
+Optional built-in coverage (Node version dependent):
+
+```bash
+node --test --experimental-test-coverage tests/*.test.js
+```
+
+---
+
 ## Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:

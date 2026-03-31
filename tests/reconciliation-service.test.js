@@ -25,9 +25,9 @@ function createReconHarness(seed) {
     },
     Ledger: {
       getEntryTotal: (entry) => {
-        let total = 0;
-        for (const line of entry.lines) total += (line.debit || 0) - (line.credit || 0);
-        return Math.abs(total);
+        let totalDebits = 0;
+        for (const line of entry.lines) totalDebits += (line.debit || 0);
+        return totalDebits;
       },
     },
     PayeeService: {},
@@ -85,7 +85,8 @@ test('startReconciliation captures app transactions for account and month', asyn
 
   assert.equal(result.success, true);
   assert.equal(reconciliations.length, 1);
-  assert.deepEqual(reconciliations[0].unmatchedAppTransactionIds, ['e1']);
+  assert.equal(reconciliations[0].unmatchedAppTransactionIds.length, 1);
+  assert.equal(reconciliations[0].unmatchedAppTransactionIds[0], 'e1');
   assert.equal(dbCalls.saveReconciliation, 1);
 });
 
