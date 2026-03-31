@@ -111,10 +111,22 @@
             await TagService().loadAll();
             console.log('[FCL] Tags loaded');
 
-            // 15. Register Service Worker
+            // 15. Load payees
+            await PayeeService().loadAll();
+            console.log('[FCL] Payees loaded');
+
+            // 16. Load financial goals & contributions
+            await GoalService().loadAll();
+            console.log('[FCL] Goals loaded');
+
+            // 17. Load reconciliations
+            await ReconciliationService().loadAll();
+            console.log('[FCL] Reconciliations loaded');
+
+            // 18. Register Service Worker
             registerServiceWorker();
 
-            // 16. Check backup reminder
+            // 19. Check backup reminder
             const backupStatus = BackupService().getBackupStatus();
             if (backupStatus.reminderDue) {
                 setTimeout(() => {
@@ -122,7 +134,7 @@
                 }, 2000);
             }
 
-            // 17. Check iOS install prompt
+            // 20. Check iOS install prompt
             checkInstallPrompt();
 
             console.log('[FCL] FinChronicleLedger v' + Types().APP_VERSION + ' ready');
