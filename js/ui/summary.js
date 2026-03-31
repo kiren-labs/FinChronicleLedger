@@ -8,6 +8,7 @@
     const State = () => global.FCL.State;
     const ReportService = () => global.FCL.ReportService;
     const Settings = () => global.FCL.SettingsService;
+    const RecurringService = () => global.FCL.RecurringService;
     const R = () => global.FCL.UI.Renderer;
 
     // =====================================================================
@@ -70,6 +71,7 @@
                         Expense-to-Income: <strong>${insights.expensePercentage}%</strong>
                     </div>` : ''}
                     ${mode === 'advanced' ? _renderNetWorth() : ''}
+                    ${_renderRecurringWidget()}
                 </div>
             </div>
         `;
@@ -82,6 +84,9 @@
                 render(mode);
             });
         }
+
+        // Bind recurring confirm/skip actions
+        _bindRecurringActions();
     }
 
     function _deltaHTML(delta) {
@@ -99,6 +104,82 @@
                 <span class="tile-value">${R().formatCurrency(report.netWorth)}</span>
             </div>
         `;
+    }
+
+    // =====================================================================
+    // Recurring Widget
+    // =====================================================================
+
+    function _renderRecurringWidget() {
+        if (!RecurringService()) return '';
+
+        const pending = RecurringService().getPendingReminders();
+        const upcoming = RecurringService().getUpcoming(7);
+
+        if (pending.length === 0 && upcoming.length === 0) return '';
+
+        let html = '<div class="recurring-upcoming-widget">';
+        html += '<h4 class="recurring-widget-title"><i class="ri-calendar-schedule-line"></i> Recurring</h4>';
+
+        // Pending reminders (need action)
+        if (pending.length > 0) {
+            html += '<div class="recurring-pending-list">';
+            for (var i = 0; i < pending.length; i++) {
+                var item = pending[i];
+                html += '<div class="recurring-pending-item">';
+                html += '<div class="recurring-pending-info">';
+                html += '<span class="recurring-pending-name">' + R().escapeHTML(item.template.name) + '</span>';
+                html += '<span class="recurring-pending-detail">' + R().formatCurrency(item.template.amount) + ' &middot; due ' + R().formatDate(item.record.dueDate) + '</span>';
+                html += '</div>';
+                html += '<div class="recurring-pending-actions">';
+                html += '<button class="btn btn--small btn--primary recurring-confirm-btn" data-template-id="' + R().escapeHTML(item.template.id) + '" data-due-date="' + R().escapeHTML(item.record.dueDate) + '">Confirm</button>';
+                html += '<button class="btn btn--small btn--ghost recurring-skip-btn" data-template-id="' + R().escapeHTML(item.template.id) + '" data-due-date="' + R().escapeHTML(item.record.dueDate) + '">Skip</button>';
+                html += '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        // Upcoming (informational)
+        if (upcoming.length > 0) {
+            html += '<div class="recurring-upcoming-list">';
+            for (var j = 0; j < upcoming.length; j++) {
+                var u = upcoming[j];
+                html += '<div class="recurring-upcoming-item">';
+                html += '<span class="recurring-upcoming-name">' + R().escapeHTML(u.template.name) + '</span>';
+                html += '<span class="recurring-upcoming-detail">' + R().formatCurrency(u.template.amount) + ' &middot; ' + R().formatDate(u.dueDate) + '</span>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function _bindRecurringActions() {
+        document.querySelectorAll('.recurring-confirm-btn').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                var templateId = btn.dataset.templateId;
+                var dueDate = btn.dataset.dueDate;
+                await RecurringService().confirmPending(templateId, dueDate);
+
+                // Reload entries into state since a new transaction was created
+                var entries = await global.FCL.DB.getAllJournalEntries();
+                State().setEntries(entries);
+                R().showToast('Recurring transaction confirmed!', 'success');
+            });
+        });
+
+        document.querySelectorAll('.recurring-skip-btn').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                var templateId = btn.dataset.templateId;
+                var dueDate = btn.dataset.dueDate;
+                await RecurringService().skipPending(templateId, dueDate);
+                R().showToast('Skipped', 'info');
+                R().updateUI();
+            });
+        });
     }
 
     // =====================================================================

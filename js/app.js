@@ -22,6 +22,7 @@
     const AccountService = () => global.FCL.AccountService;
     const SettingsService = () => global.FCL.SettingsService;
     const BackupService = () => global.FCL.BackupService;
+    const RecurringService = () => global.FCL.RecurringService;
     const Renderer = () => global.FCL.UI.Renderer;
     const Navigation = () => global.FCL.UI.Navigation;
     const Types = () => global.FCL.Types;
@@ -77,10 +78,28 @@
             Renderer().updateUI();
             console.log('[FCL] First render complete');
 
-            // 12. Register Service Worker
+            // 12. Load recurring templates and process missed entries
+            await RecurringService().loadAll();
+            var recurResult = await RecurringService().processUpcoming();
+            if (recurResult.created > 0 || recurResult.reminded > 0) {
+                // Reload entries if any were auto-created
+                if (recurResult.created > 0) {
+                    var freshEntries = await DB().getAllJournalEntries();
+                    State().setEntries(freshEntries);
+                }
+                var msg = [];
+                if (recurResult.created > 0) msg.push(recurResult.created + ' recurring transaction' + (recurResult.created > 1 ? 's' : '') + ' created');
+                if (recurResult.reminded > 0) msg.push(recurResult.reminded + ' pending reminder' + (recurResult.reminded > 1 ? 's' : ''));
+                setTimeout(function () {
+                    Renderer().showToast(msg.join(', '), 'info');
+                }, 500);
+            }
+            console.log('[FCL] Recurring processed: ' + recurResult.created + ' created, ' + recurResult.reminded + ' reminders');
+
+            // 13. Register Service Worker
             registerServiceWorker();
 
-            // 13. Check backup reminder
+            // 14. Check backup reminder
             const backupStatus = BackupService().getBackupStatus();
             if (backupStatus.reminderDue) {
                 setTimeout(() => {
@@ -88,7 +107,7 @@
                 }, 2000);
             }
 
-            // 14. Check iOS install prompt
+            // 15. Check iOS install prompt
             checkInstallPrompt();
 
             console.log('[FCL] FinChronicleLedger v' + Types().APP_VERSION + ' ready');
