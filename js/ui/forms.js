@@ -11,11 +11,13 @@
     const AccountService = () => global.FCL.AccountService;
     const TransactionService = () => global.FCL.TransactionService;
     const BudgetService = () => global.FCL.BudgetService;
+    const TagService = () => global.FCL.TagService;
     const R = () => global.FCL.UI.Renderer;
 
     let _advancedLines = 2; // Number of journal lines in advanced editor
     let _splitMode = false; // Whether split transaction mode is active
     let _splitLines = 2;    // Number of split lines in simple mode
+    let _selectedTagIds = []; // Tag IDs selected for current transaction
 
     // =====================================================================
     // Render
@@ -92,6 +94,7 @@
                         <label for="notes">Notes (optional)</label>
                         <input type="text" id="notes" maxlength="500" placeholder="Transfer notes">
                     </div>
+                    ${_renderTagPicker()}
                     <button type="submit" class="btn btn--primary btn--full">${isEditing ? 'Update Transfer' : 'Transfer'}</button>
                     ${isEditing ? '<button type="button" class="btn btn--secondary btn--full" id="cancel-edit">Cancel</button>' : ''}
                 </form>
@@ -154,6 +157,7 @@
                         <label for="notes">Notes (optional)</label>
                         <input type="text" id="notes" maxlength="500" placeholder="Add a note">
                     </div>
+                    ${_renderTagPicker()}
                     ${!_splitMode && !isEditing ? '<button type="button" class="btn btn--ghost btn--small split-toggle-btn" id="toggle-split"><i class="ri-scissors-line"></i> Split this transaction</button>' : ''}
                     <button type="submit" class="btn btn--primary btn--full">${isEditing ? 'Update Transaction' : 'Add Transaction'}</button>
                     ${isEditing ? '<button type="button" class="btn btn--secondary btn--full" id="cancel-edit">Cancel</button>' : ''}
@@ -227,6 +231,9 @@
             form.addEventListener('submit', _splitMode ? handleSplitSubmit : handleSimpleSubmit);
         }
 
+        // Tag chips
+        _bindTagEvents();
+
         // Cancel edit
         const cancelBtn = document.getElementById('cancel-edit');
         if (cancelBtn) {
@@ -248,6 +255,43 @@
         if (el) {
             el.textContent = 'Total: ' + Settings().getCurrencySymbol() + total.toFixed(2);
         }
+    }
+
+    // =====================================================================
+    // Tag Picker
+    // =====================================================================
+
+    function _renderTagPicker() {
+        var tags = TagService() ? TagService().getAllTags() : [];
+        if (tags.length === 0) return '';
+
+        var chips = tags.map(function (tag) {
+            var selected = _selectedTagIds.indexOf(tag.id) !== -1;
+            return '<button type="button" class="tag-chip' + (selected ? ' tag-chip--selected' : '') + '" data-tag-id="' + R().escapeHTML(tag.id) + '" style="border-color:' + R().escapeHTML(tag.color) + (selected ? ';background:' + R().escapeHTML(tag.color) + ';color:#fff' : '') + '">' + R().escapeHTML(tag.displayName) + '</button>';
+        }).join('');
+
+        return '<div class="form-group"><label>Tags</label><div class="tag-picker">' + chips + '</div></div>';
+    }
+
+    function _bindTagEvents() {
+        document.querySelectorAll('.tag-chip[data-tag-id]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var tagId = btn.dataset.tagId;
+                var idx = _selectedTagIds.indexOf(tagId);
+                if (idx === -1) {
+                    _selectedTagIds.push(tagId);
+                } else {
+                    _selectedTagIds.splice(idx, 1);
+                }
+                // Re-render just the picker area
+                var picker = btn.closest('.tag-picker');
+                if (picker) {
+                    var parent = picker.parentElement;
+                    parent.outerHTML = _renderTagPicker();
+                    _bindTagEvents();
+                }
+            });
+        });
     }
 
     // =====================================================================
@@ -429,6 +473,11 @@
         }
 
         if (result.success) {
+            // Save tags if any selected
+            if (_selectedTagIds.length > 0 && result.entry && TagService()) {
+                await TagService().setEntryTags(result.entry.id, _selectedTagIds.slice());
+            }
+
             R().showToast(editingId ? 'Transaction updated!' : 'Transaction added!', 'success');
 
             // Budget alert check (on expense create/edit)
@@ -449,6 +498,7 @@
             }
 
             State().setEditingEntryId(null);
+            _selectedTagIds = [];
             resetForm();
         } else {
             R().showToast(result.errors[0] || 'Error saving transaction', 'error');
@@ -499,9 +549,15 @@
         });
 
         if (result.success) {
+            // Save tags if any selected
+            if (_selectedTagIds.length > 0 && result.entry && TagService()) {
+                await TagService().setEntryTags(result.entry.id, _selectedTagIds.slice());
+            }
+
             R().showToast('Split transaction added!', 'success');
             _splitMode = false;
             _splitLines = 2;
+            _selectedTagIds = [];
             resetForm();
         } else {
             R().showToast(result.errors[0] || 'Error saving split transaction', 'error');
@@ -545,6 +601,7 @@
     function resetForm() {
         _splitMode = false;
         _splitLines = 2;
+        _selectedTagIds = [];
         const form = document.getElementById('transaction-form');
         if (form) {
             form.dataset.type = 'expense';
@@ -558,6 +615,7 @@
      */
     function populateFormForEdit(entry) {
         State().setEditingEntryId(entry.id);
+        _selectedTagIds = Array.isArray(entry.tags) ? entry.tags.slice() : [];
         const info = TransactionService().getSimpleDisplayInfo(entry);
         if (!info) return;
 
