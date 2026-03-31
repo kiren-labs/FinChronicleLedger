@@ -20,8 +20,21 @@
     // =====================================================================
 
     function render(mode) {
+        // Preserve search input focus across re-renders
+        const hadSearchFocus = document.activeElement && document.activeElement.id === 'searchInput';
+        const cursorPos = hadSearchFocus ? document.activeElement.selectionStart : 0;
+
         renderFilters();
         renderTransactionList(mode);
+
+        // Restore focus to search input if it was focused before
+        if (hadSearchFocus) {
+            const input = document.getElementById('searchInput');
+            if (input) {
+                input.focus();
+                input.setSelectionRange(cursorPos, cursorPos);
+            }
+        }
     }
 
     // =====================================================================
