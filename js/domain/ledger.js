@@ -270,6 +270,7 @@
     /**
      * Determine the "simple mode" display info from a journal entry.
      * Returns { type, amount, categoryAccountId, assetAccountId }.
+     * For split entries, returns null (handled separately).
      * @param {Object} entry
      * @returns {Object|null}
      */
@@ -316,6 +317,109 @@
     }
 
     // =====================================================================
+    // Split Transaction Helpers
+    // =====================================================================
+
+    /**
+     * Check if an entry is a split transaction (multiple debit lines for expense,
+     * or multiple credit lines for income).
+     * @param {Object} entry
+     * @returns {boolean}
+     */
+    function isSplitEntry(entry) {
+        if (entry.type === T().EntryType.EXPENSE) {
+            return entry.lines.filter(l => l.debit > 0).length > 1;
+        }
+        if (entry.type === T().EntryType.INCOME) {
+            return entry.lines.filter(l => l.credit > 0).length > 1;
+        }
+        return false;
+    }
+
+    /**
+     * Get split breakdown for display.
+     * @param {Object} entry
+     * @returns {{ total: number, assetAccountId: string, lines: Array<{accountId: string, amount: number}> }|null}
+     */
+    function getSplitBreakdown(entry) {
+        if (!isSplitEntry(entry)) return null;
+
+        if (entry.type === T().EntryType.EXPENSE) {
+            const creditLine = entry.lines.find(l => l.credit > 0);
+            const debitLines = entry.lines.filter(l => l.debit > 0);
+            return {
+                total: A().round2(debitLines.reduce((s, l) => s + l.debit, 0)),
+                assetAccountId: creditLine ? creditLine.accountId : null,
+                lines: debitLines.map(l => ({ accountId: l.accountId, amount: l.debit })),
+            };
+        }
+
+        if (entry.type === T().EntryType.INCOME) {
+            const debitLine = entry.lines.find(l => l.debit > 0);
+            const creditLines = entry.lines.filter(l => l.credit > 0);
+            return {
+                total: A().round2(creditLines.reduce((s, l) => s + l.credit, 0)),
+                assetAccountId: debitLine ? debitLine.accountId : null,
+                lines: creditLines.map(l => ({ accountId: l.accountId, amount: l.credit })),
+            };
+        }
+
+        return null;
+    }
+
+    /**
+     * Build a split expense entry.
+     * Multiple DR lines (expense accounts) + single CR line (asset account).
+     *
+     * @param {Array<{accountId: string, amount: number}>} splitLines
+     * @param {string} assetAccountId
+     * @param {string} date
+     * @param {string} notes
+     * @returns {Object} JournalEntry
+     */
+    function buildSplitExpense(splitLines, assetAccountId, date, notes) {
+        const total = A().round2(splitLines.reduce((s, l) => s + l.amount, 0));
+        const lines = splitLines.map(l => ({
+            accountId: l.accountId,
+            debit: l.amount,
+            credit: 0,
+        }));
+        lines.push({ accountId: assetAccountId, debit: 0, credit: total });
+
+        return createJournalEntry({
+            type: T().EntryType.EXPENSE,
+            date,
+            description: notes,
+            lines,
+        });
+    }
+
+    /**
+     * Build a split income entry.
+     * Single DR line (asset account) + multiple CR lines (income accounts).
+     *
+     * @param {Array<{accountId: string, amount: number}>} splitLines
+     * @param {string} assetAccountId
+     * @param {string} date
+     * @param {string} notes
+     * @returns {Object} JournalEntry
+     */
+    function buildSplitIncome(splitLines, assetAccountId, date, notes) {
+        const total = A().round2(splitLines.reduce((s, l) => s + l.amount, 0));
+        const lines = [{ accountId: assetAccountId, debit: total, credit: 0 }];
+        splitLines.forEach(l => {
+            lines.push({ accountId: l.accountId, debit: 0, credit: l.amount });
+        });
+
+        return createJournalEntry({
+            type: T().EntryType.INCOME,
+            date,
+            description: notes,
+            lines,
+        });
+    }
+
+    // =====================================================================
     // Export
     // =====================================================================
     global.FCL = global.FCL || {};
@@ -326,8 +430,12 @@
         buildSimpleIncome,
         buildTransferEntry,
         buildOpeningBalanceEntry,
+        buildSplitExpense,
+        buildSplitIncome,
         getEntryTotal,
         getSimpleDisplayInfo,
+        isSplitEntry,
+        getSplitBreakdown,
     };
 
 })(window);
