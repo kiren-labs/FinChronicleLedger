@@ -249,6 +249,12 @@
                 }
             });
         });
+
+        // Edit budget
+        const editBudgetBtn = document.getElementById('edit-budget');
+        if (editBudgetBtn) {
+            editBudgetBtn.addEventListener('click', () => _showBudgetForm());
+        }
     }
 
     // =====================================================================
@@ -439,6 +445,186 @@
                 render();
             } else {
                 R().showToast(result.errors[0] || 'Error creating template', 'error');
+            }
+        });
+    }
+
+    // =====================================================================
+    // Budget UI
+    // =====================================================================
+
+    function _renderBudgetSummary() {
+        var month = State().getCurrentMonth();
+        var status = BudgetService().getBudgetStatus(month);
+        if (!status) {
+            return '<p class="text-muted">No budget set for this month.</p>';
+        }
+
+        var overallHTML = '';
+        if (status.overallBudget) {
+            var statusClass = status.overallStatus === 'on-track' ? 'budget-on-track'
+                : status.overallStatus === 'approaching' ? 'budget-approaching'
+                : 'budget-over';
+            overallHTML = '<div class="budget-overall ' + statusClass + '">'
+                + '<span>Overall: ' + R().formatCurrency(status.overallBudget) + ' budget</span>'
+                + '<span>' + R().formatCurrency(status.totalSpent) + ' spent (' + status.overallPercentage + '%)</span>'
+                + '<div class="budget-bar"><div class="budget-bar-fill" style="width:' + Math.min(status.overallPercentage, 100) + '%"></div></div>'
+                + '</div>';
+        }
+
+        var catHTML = status.categoryBudgets.map(function (cb) {
+            var acc = AccountService().getAccountById(cb.categoryAccountId);
+            var name = acc ? R().escapeHTML(acc.name) : 'Unknown';
+            var cls = cb.status === 'on-track' ? 'budget-on-track'
+                : cb.status === 'approaching' ? 'budget-approaching'
+                : 'budget-over';
+            return '<div class="budget-category-row ' + cls + '">'
+                + '<div class="budget-cat-header">'
+                + '<span class="budget-cat-name">' + name + '</span>'
+                + '<span class="budget-cat-amounts">' + R().formatCurrency(cb.spentAmount) + ' / ' + R().formatCurrency(cb.budgetAmount) + '</span>'
+                + '</div>'
+                + '<div class="budget-bar"><div class="budget-bar-fill" style="width:' + Math.min(cb.percentageUsed, 100) + '%"></div></div>'
+                + '<span class="budget-cat-pct">' + cb.percentageUsed + '% — ' + _budgetStatusLabel(cb.status) + '</span>'
+                + '</div>';
+        }).join('');
+
+        return overallHTML + '<div class="budget-categories">' + catHTML + '</div>';
+    }
+
+    function _budgetStatusLabel(status) {
+        if (status === 'on-track') return 'On track';
+        if (status === 'approaching') return 'Approaching limit';
+        return 'Over budget';
+    }
+
+    function _showBudgetForm() {
+        var mount = document.getElementById('modalMount');
+        if (!mount) return;
+
+        var month = State().getCurrentMonth();
+        var existing = BudgetService().getBudgetForMonth(month);
+        var expenseAccounts = AccountService().getActiveAccountsByType('expense');
+
+        // Build category rows from existing budget or defaults
+        var catBudgets = {};
+        if (existing) {
+            existing.categoryBudgets.forEach(function (cb) {
+                catBudgets[cb.categoryAccountId] = cb.budgetAmount;
+            });
+        }
+
+        var categoryRowsHTML = expenseAccounts.map(function (a) {
+            var val = catBudgets[a.id] || '';
+            return '<div class="budget-form-row">'
+                + '<label>' + R().escapeHTML(a.name) + '</label>'
+                + '<input type="number" step="0.01" min="0" data-account-id="' + R().escapeHTML(a.id) + '" class="budget-cat-input" value="' + val + '" placeholder="0.00" inputmode="decimal">'
+                + '</div>';
+        }).join('');
+
+        // Previous month for copy button
+        var parts = month.split('-');
+        var prevDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 2, 1);
+        var prevMonth = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
+        var hasPrevBudget = !!BudgetService().getBudgetForMonth(prevMonth);
+
+        mount.innerHTML = '<div class="modal-overlay" id="budget-modal-overlay">'
+            + '<div class="modal budget-modal">'
+            + '<h3>Budget — ' + R().formatMonth(month) + '</h3>'
+            + '<form id="budget-form">'
+            + '<div class="form-group">'
+            + '<label for="budget-overall">Overall Budget (optional)</label>'
+            + '<input type="number" id="budget-overall" step="0.01" min="0" value="' + (existing && existing.overallBudget ? existing.overallBudget : '') + '" placeholder="Total spending cap" inputmode="decimal">'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label for="budget-threshold">Alert Threshold (%)</label>'
+            + '<input type="number" id="budget-threshold" min="1" max="100" value="' + (existing ? existing.alertThreshold : 80) + '">'
+            + '</div>'
+            + '<div class="budget-form-categories">'
+            + '<h4>Category Budgets</h4>'
+            + categoryRowsHTML
+            + '</div>'
+            + '<button type="submit" class="btn btn--primary btn--full">Save Budget</button>'
+            + (hasPrevBudget ? '<button type="button" class="btn btn--secondary btn--full" id="budget-copy-prev"><i class="ri-file-copy-line"></i> Copy from ' + R().formatMonth(prevMonth) + '</button>' : '')
+            + (existing ? '<button type="button" class="btn btn--ghost btn--full btn--danger" id="budget-delete">Delete Budget</button>' : '')
+            + '<button type="button" class="btn btn--secondary btn--full" id="budget-cancel">Cancel</button>'
+            + '</form>'
+            + '</div>'
+            + '</div>';
+
+        // Cancel
+        document.getElementById('budget-cancel').addEventListener('click', function () {
+            mount.innerHTML = '';
+        });
+
+        // Overlay click
+        document.getElementById('budget-modal-overlay').addEventListener('click', function (e) {
+            if (e.target.id === 'budget-modal-overlay') mount.innerHTML = '';
+        });
+
+        // Copy from previous
+        var copyBtn = document.getElementById('budget-copy-prev');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', async function () {
+                var result = await BudgetService().copyBudgetToMonth(prevMonth, month);
+                if (result.success) {
+                    R().showToast('Copied from ' + prevMonth, 'success');
+                    mount.innerHTML = '';
+                    render();
+                } else {
+                    R().showToast(result.errors[0] || 'Copy failed', 'error');
+                }
+            });
+        }
+
+        // Delete
+        var deleteBtn = document.getElementById('budget-delete');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async function () {
+                if (confirm('Delete budget for ' + month + '?')) {
+                    await BudgetService().deleteBudgetForMonth(month);
+                    R().showToast('Budget deleted', 'info');
+                    mount.innerHTML = '';
+                    render();
+                }
+            });
+        }
+
+        // Submit
+        document.getElementById('budget-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            var overallVal = document.getElementById('budget-overall').value;
+            var thresholdVal = document.getElementById('budget-threshold').value;
+
+            var categoryBudgets = [];
+            document.querySelectorAll('.budget-cat-input').forEach(function (inp) {
+                var amount = parseFloat(inp.value);
+                if (amount > 0) {
+                    categoryBudgets.push({
+                        categoryAccountId: inp.dataset.accountId,
+                        budgetAmount: amount,
+                    });
+                }
+            });
+
+            if (categoryBudgets.length === 0) {
+                R().showToast('Set at least one category budget', 'error');
+                return;
+            }
+
+            var result = await BudgetService().saveBudgetForMonth({
+                month: month,
+                overallBudget: overallVal ? parseFloat(overallVal) : null,
+                alertThreshold: parseInt(thresholdVal, 10) || 80,
+                categoryBudgets: categoryBudgets,
+            });
+
+            if (result.success) {
+                R().showToast('Budget saved!', 'success');
+                mount.innerHTML = '';
+                render();
+            } else {
+                R().showToast(result.errors[0] || 'Error saving budget', 'error');
             }
         });
     }
