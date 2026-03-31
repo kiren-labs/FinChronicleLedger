@@ -62,8 +62,8 @@ All features maintain the app's core principles:
 | 3 | Split Transactions | P0 | Low | High | v1.2.0 | ✅ Implemented — UI-only; no schema change |
 | 4 | Search (Full-Text) | P0 | Low | High | v1.2.0 | ✅ Implemented — Gap #3a; no new store |
 | 5 | Tags & Custom Categories | P1 | Low | Medium | v1.2.0 | Gap #3b |
-| 6 | Undo / Delete Recovery | P1 | Low | High | v1.2.0 | No schema change |
-| 7 | Account Management UI | P1 | Low | Medium | v1.2.0 | Prerequisite for customization |
+| 6 | Undo / Delete Recovery | P1 | Low | High | v1.2.0 | ✅ Implemented — 8-second undo window, optimistic UI |
+| 7 | Account Management UI | P1 | Low | Medium | v1.2.0 | ✅ Implemented — CRUD, deactivate, Advanced Mode |
 | 4-A | CSV Import (Simple Transactions) | P1 | Low | Medium | v1.2.0 | Gap #5 |
 | 4-B | Merge Restore (Non-destructive) | P1 | Medium | Medium | v1.2.0 | Gap #6 |
 | 4-C | Backup Status & Reminders UX | P1 | Low | Medium | v1.2.0 | ✅ Implemented — Gap #7 |

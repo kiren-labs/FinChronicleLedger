@@ -54,6 +54,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New application layer: `js/application/budget-service.js` — CRUD, status queries, alert checks
 - IndexedDB upgraded to v3 with `budgets` store (unique month index)
 
+#### Undo / Delete Recovery (P1)
+- **8-second undo window** after deleting a transaction — toast shows [Undo] button
+- Optimistic UI: entry removed from list immediately, IndexedDB delete deferred
+- If app is closed during the window, the entry survives in IndexedDB (fail-safe)
+- Toast supports action buttons (`showToast(message, type, {label, action})`)
+- Delete confirmation modal updated with "8 seconds to undo" guidance
+
+#### Account Management UI (P1)
+- **Accounts section** in Settings (Advanced Mode) — grouped by type with collapsible `<details>` sections
+- Per-account actions: **Edit** (rename), **Deactivate** / **Reactivate**, **Delete**
+- System accounts are read-only (cannot rename, deactivate, or delete)
+- **Add Custom Account** — modal form with name, type, and auto-suggested account code
+- Account codes auto-assigned within standard ranges (Assets 1000–1999, Liabilities 2000–2999, etc.)
+- Delete only allowed for accounts with zero transactions; accounts with history must be deactivated instead
+- New service methods: `addAccount()`, `deleteAccount()`, `getNextAccountCode()`
+- New infrastructure: `DB.deleteAccount()`, `State.addAccount()`, `State.removeAccount()`
+
 ### Changed
 
 - **Service Worker**: Added `search-service.js`, `recurring.js`, `recurring-service.js`, `budget.js`, `budget-service.js` to `CACHED_URLS` for offline availability
@@ -63,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CSP inline style violations**: Replaced all inline `style=""` attributes with CSS classes (`.hidden`, `.filter-disabled`) and programmatic `element.style.width` for dynamic budget bar widths — resolves `style-src 'self'` Content Security Policy errors
 - **Roadmap**: Updated Feature Overview Matrix and Implementation Priority to track completed features
 
 ---
