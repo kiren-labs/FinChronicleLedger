@@ -57,7 +57,7 @@ All features maintain the app's core principles:
 
 | # | Feature | Priority | Complexity | Impact | Release | Notes |
 |---|---------|----------|------------|--------|---------|-------|
-| 1 | Recurring Transactions | P0 | Medium | High | v1.2.0 | Gap #1; check on startup only |
+| 1 | Recurring Transactions | P0 | Medium | High | v1.2.0 | ✅ Implemented — auto-create + reminder modes, backfill engine |
 | 2 | Budget Planning & Tracking | P0 | Medium | High | v1.2.0 | Gap #2 |
 | 3 | Split Transactions | P0 | Low | High | v1.2.0 | ✅ Implemented — UI-only; no schema change |
 | 4 | Search (Full-Text) | P0 | Low | High | v1.2.0 | ✅ Implemented — Gap #3a; no new store |
