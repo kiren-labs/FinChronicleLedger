@@ -712,3 +712,21 @@
     background: rgba(0, 81, 213, 0.2);
     color: var(--color-primary-strong);
 }
+
+/* Recurring Transactions */
+[data-theme="dark"] .recurring-item {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .recurring-pending-item {
+    background: rgba(255, 193, 7, 0.08);
+}
+
+[data-theme="dark"] .recurring-status-badge {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .recurring-upcoming-widget {
+    border-top-color: var(--color-border);
+}

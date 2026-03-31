@@ -30,10 +30,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New `createSplitTransaction()` in TransactionService
 - No schema change — uses existing multi-line double-entry journal entries natively
 
+#### Recurring Transactions (P0)
+- **Recurring template management** in Settings — create, pause/resume, and delete templates
+- Supports expense, income, and transfer types with configurable frequency (daily/weekly/monthly/quarterly/yearly)
+- **Auto-create mode**: Automatically creates transactions on missed due dates when the app is opened
+- **Reminder mode**: Queues pending reminders for manual confirmation/skip
+- **Upcoming widget** on the dashboard summary showing next 7 days of recurring transactions
+- Pending reminders shown with Confirm/Skip action buttons on the summary
+- Backfill engine handles "opened app after vacation" scenario — catches up all missed due dates
+- New domain layer: `js/domain/recurring.js` — frequency types, date advancement, missed/upcoming date calculation, template validation
+- New application layer: `js/application/recurring-service.js` — CRUD, processUpcoming backfill, pending reminder management
+- IndexedDB upgraded to v2 with `recurring_templates` and `recurring_history` stores
+
 ### Changed
 
-- **Service Worker**: Added `search-service.js` to `CACHED_URLS` for offline availability
+- **Service Worker**: Added `search-service.js`, `recurring.js`, `recurring-service.js` to `CACHED_URLS` for offline availability
 - **Service Worker**: Bumped `CACHE_NAME` and `CDN_CACHE_NAME` to `v1.2.0`
+- **App startup**: Now loads recurring templates and processes missed recurring entries after first render
 
 ### Fixed
 
