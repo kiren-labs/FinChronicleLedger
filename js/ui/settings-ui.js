@@ -107,6 +107,15 @@
                 </button>
             </div>
 
+            <!-- Account Management -->
+            <div class="settings-section" data-mode="advanced">
+                <h3>Accounts</h3>
+                ${_renderAccountList()}
+                <button class="btn btn--secondary btn--full" id="add-account-btn">
+                    <i class="ri-add-line"></i> Add Custom Account
+                </button>
+            </div>
+
             <!-- About -->
             <div class="settings-section">
                 <h3>About</h3>
@@ -137,6 +146,7 @@
         `;
 
         _bindSettingsEvents();
+        _bindAccountEvents();
         _applyBarWidths(container);
     }
 
@@ -632,6 +642,235 @@
                 render();
             } else {
                 R().showToast(result.errors[0] || 'Error saving budget', 'error');
+            }
+        });
+    }
+
+    // =====================================================================
+    // Account Management UI
+    // =====================================================================
+
+    var _accountTypes = [
+        { key: 'asset', label: 'Assets' },
+        { key: 'liability', label: 'Liabilities' },
+        { key: 'equity', label: 'Equity' },
+        { key: 'income', label: 'Income' },
+        { key: 'expense', label: 'Expenses' },
+    ];
+
+    function _renderAccountList() {
+        var html = '';
+        for (var t = 0; t < _accountTypes.length; t++) {
+            var group = _accountTypes[t];
+            var accounts = AccountService().getAccountsByType(group.key)
+                .sort(function (a, b) { return a.code - b.code; });
+            if (accounts.length === 0) continue;
+
+            html += '<details class="account-type-group">';
+            html += '<summary>' + R().escapeHTML(group.label) + ' <span class="text-muted">(' + accounts.length + ')</span></summary>';
+            html += '<div class="account-type-list">';
+
+            for (var i = 0; i < accounts.length; i++) {
+                var a = accounts[i];
+                var statusCls = a.isActive ? '' : ' account-row--inactive';
+                html += '<div class="account-row' + statusCls + '" data-account-id="' + R().escapeHTML(a.id) + '">';
+                html += '<span class="account-code">' + a.code + '</span>';
+                html += '<span class="account-name">' + R().escapeHTML(a.name) + '</span>';
+                if (!a.isActive) html += '<span class="account-badge account-badge--inactive">Inactive</span>';
+                if (a.isSystem) {
+                    html += '<span class="account-badge account-badge--system">System</span>';
+                } else {
+                    html += '<span class="account-actions">';
+                    html += '<button class="btn btn--ghost btn--small acct-edit" data-acct-id="' + R().escapeHTML(a.id) + '" title="Edit"><i class="ri-pencil-line"></i></button>';
+                    if (a.isActive) {
+                        html += '<button class="btn btn--ghost btn--small acct-deactivate" data-acct-id="' + R().escapeHTML(a.id) + '" title="Deactivate"><i class="ri-eye-off-line"></i></button>';
+                    } else {
+                        html += '<button class="btn btn--ghost btn--small acct-reactivate" data-acct-id="' + R().escapeHTML(a.id) + '" title="Reactivate"><i class="ri-eye-line"></i></button>';
+                    }
+                    html += '<button class="btn btn--ghost btn--small acct-delete" data-acct-id="' + R().escapeHTML(a.id) + '" title="Delete"><i class="ri-delete-bin-line"></i></button>';
+                    html += '</span>';
+                }
+                html += '</div>';
+            }
+
+            html += '</div></details>';
+        }
+        return html || '<p class="text-muted">No accounts found.</p>';
+    }
+
+    function _bindAccountEvents() {
+        // Add account
+        var addBtn = document.getElementById('add-account-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function () {
+                _showAddAccountForm();
+            });
+        }
+
+        // Edit buttons
+        document.querySelectorAll('.acct-edit').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                _showEditAccountForm(btn.dataset.acctId);
+            });
+        });
+
+        // Deactivate buttons
+        document.querySelectorAll('.acct-deactivate').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                var result = await AccountService().deactivateAccount(btn.dataset.acctId);
+                if (result.success) {
+                    R().showToast('Account deactivated', 'info');
+                    render();
+                } else {
+                    R().showToast(result.error || 'Cannot deactivate', 'error');
+                }
+            });
+        });
+
+        // Reactivate buttons
+        document.querySelectorAll('.acct-reactivate').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                var result = await AccountService().reactivateAccount(btn.dataset.acctId);
+                if (result.success) {
+                    R().showToast('Account reactivated', 'success');
+                    render();
+                } else {
+                    R().showToast(result.error || 'Cannot reactivate', 'error');
+                }
+            });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.acct-delete').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                var result = await AccountService().deleteAccount(btn.dataset.acctId);
+                if (result.success) {
+                    R().showToast('Account deleted', 'success');
+                    render();
+                } else {
+                    R().showToast(result.errors[0] || 'Cannot delete', 'error');
+                }
+            });
+        });
+    }
+
+    function _showAddAccountForm() {
+        var mount = document.getElementById('modalMount');
+        if (!mount) return;
+
+        var typeOptions = _accountTypes
+            .filter(function (t) { return t.key !== 'equity'; })
+            .map(function (t) {
+                return '<option value="' + t.key + '">' + t.label + '</option>';
+            }).join('');
+
+        mount.innerHTML = '<div class="modal-overlay" id="acct-modal-overlay">'
+            + '<div class="modal">'
+            + '<h3>Add Custom Account</h3>'
+            + '<form id="acct-add-form">'
+            + '<div class="form-group">'
+            + '<label for="acct-name">Account Name</label>'
+            + '<input type="text" id="acct-name" required minlength="2" maxlength="100" placeholder="e.g. Consulting Income">'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label for="acct-type">Account Type</label>'
+            + '<select id="acct-type" required>' + typeOptions + '</select>'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label for="acct-code">Account Code</label>'
+            + '<input type="number" id="acct-code" placeholder="Auto-suggested" min="1000" max="5999">'
+            + '<p class="text-muted">Leave blank for auto-assignment.</p>'
+            + '</div>'
+            + '<button type="submit" class="btn btn--primary btn--full">Save Account</button>'
+            + '<button type="button" class="btn btn--secondary btn--full" id="acct-add-cancel">Cancel</button>'
+            + '</form>'
+            + '</div>'
+            + '</div>';
+
+        // Auto-suggest code when type changes
+        var typeSelect = document.getElementById('acct-type');
+        var codeInput = document.getElementById('acct-code');
+        function suggestCode() {
+            var next = AccountService().getNextAccountCode(typeSelect.value);
+            codeInput.placeholder = next ? 'Suggested: ' + next : 'No codes available';
+        }
+        typeSelect.addEventListener('change', suggestCode);
+        suggestCode();
+
+        // Cancel
+        document.getElementById('acct-add-cancel').addEventListener('click', function () {
+            mount.innerHTML = '';
+        });
+        document.getElementById('acct-modal-overlay').addEventListener('click', function (e) {
+            if (e.target.id === 'acct-modal-overlay') mount.innerHTML = '';
+        });
+
+        // Submit
+        document.getElementById('acct-add-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var params = {
+                name: document.getElementById('acct-name').value,
+                type: typeSelect.value,
+            };
+            var codeVal = codeInput.value;
+            if (codeVal) params.code = parseInt(codeVal, 10);
+
+            var result = await AccountService().addAccount(params);
+            if (result.success) {
+                R().showToast('Account created!', 'success');
+                mount.innerHTML = '';
+                render();
+            } else {
+                R().showToast(result.errors[0] || 'Error creating account', 'error');
+            }
+        });
+    }
+
+    function _showEditAccountForm(accountId) {
+        var mount = document.getElementById('modalMount');
+        if (!mount) return;
+        var account = AccountService().getAccountById(accountId);
+        if (!account) return;
+
+        mount.innerHTML = '<div class="modal-overlay" id="acct-edit-overlay">'
+            + '<div class="modal">'
+            + '<h3>Edit Account</h3>'
+            + '<form id="acct-edit-form">'
+            + '<div class="form-group">'
+            + '<label for="acct-edit-name">Account Name</label>'
+            + '<input type="text" id="acct-edit-name" required minlength="2" maxlength="100" value="' + R().escapeHTML(account.name) + '">'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label>Type</label>'
+            + '<input type="text" disabled value="' + R().escapeHTML(account.type.charAt(0).toUpperCase() + account.type.slice(1)) + '">'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label>Code</label>'
+            + '<input type="number" disabled value="' + account.code + '">'
+            + '</div>'
+            + '<button type="submit" class="btn btn--primary btn--full">Save Changes</button>'
+            + '<button type="button" class="btn btn--secondary btn--full" id="acct-edit-cancel">Cancel</button>'
+            + '</form>'
+            + '</div>'
+            + '</div>';
+
+        document.getElementById('acct-edit-cancel').addEventListener('click', function () {
+            mount.innerHTML = '';
+        });
+        document.getElementById('acct-edit-overlay').addEventListener('click', function (e) {
+            if (e.target.id === 'acct-edit-overlay') mount.innerHTML = '';
+        });
+
+        document.getElementById('acct-edit-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var newName = document.getElementById('acct-edit-name').value;
+            var result = await AccountService().renameAccount(accountId, newName);
+            if (result.success) {
+                R().showToast('Account renamed', 'success');
+                mount.innerHTML = '';
+                render();
+            } else {
+                R().showToast(result.error || 'Error renaming account', 'error');
             }
         });
     }

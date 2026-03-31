@@ -3841,6 +3841,86 @@ details.faq-item p {
 }
 
 /* =====================================================================
+   Account Management
+   ===================================================================== */
+
+.account-type-group {
+    margin-bottom: var(--space-sm);
+}
+
+.account-type-group summary {
+    font-weight: 600;
+    font-size: var(--font-md);
+    cursor: pointer;
+    padding: var(--space-sm) 0;
+    user-select: none;
+}
+
+.account-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: var(--space-sm);
+}
+
+.account-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    transition: background 0.15s;
+}
+
+.account-row:hover {
+    background: var(--color-surface-alt, rgba(0, 0, 0, 0.03));
+}
+
+.account-row--inactive {
+    opacity: 0.55;
+}
+
+.account-code {
+    font-size: var(--font-xs);
+    color: var(--color-text-secondary);
+    min-width: 40px;
+    font-family: monospace;
+}
+
+.account-name {
+    flex: 1;
+    font-size: var(--font-sm);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-badge {
+    font-size: var(--font-xs);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.account-badge--system {
+    background: var(--color-primary-bg, #e0ecff);
+    color: var(--color-primary);
+}
+
+.account-badge--inactive {
+    background: var(--color-warning-bg, #fff3e0);
+    color: var(--color-warning, #e65100);
+}
+
+.account-actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+/* =====================================================================
    Utility classes
    ===================================================================== */
 

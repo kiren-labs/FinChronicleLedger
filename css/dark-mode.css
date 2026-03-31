@@ -749,3 +749,16 @@
     border-color: var(--color-border);
     color: var(--color-text);
 }
+
+/* Account Management */
+[data-theme="dark"] .account-row:hover {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .account-badge--system {
+    background: rgba(0, 122, 255, 0.15);
+}
+
+[data-theme="dark"] .account-badge--inactive {
+    background: rgba(230, 81, 0, 0.15);
+}
