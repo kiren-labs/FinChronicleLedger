@@ -304,9 +304,13 @@
             <div class="transaction-item transaction-item--advanced" data-id="${R().escapeHTML(entry.id)}">
                 <div class="transaction-header">
                     <span class="transaction-date">${R().formatDate(entry.date)} • ${R().escapeHTML(entry.type)}</span>
+                    <span class="transaction-amount amount--${R().escapeHTML(entry.type)}">${R().formatCurrency(total)}</span>
                 </div>
                 <div class="transaction-description">${R().escapeHTML(entry.description || '')}</div>
-                <div class="journal-lines-display">${linesHTML}</div>
+                <details class="journal-lines-toggle">
+                    <summary class="journal-lines-summary">Details</summary>
+                    <div class="journal-lines-display">${linesHTML}</div>
+                </details>
                 ${_renderTagBadges(entry)}
                 <div class="transaction-actions">
                     <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>

@@ -2694,6 +2694,41 @@ button.primary.loading .btn-spinner {
 .line-dr { color: var(--color-success-strong); font-weight: 600; font-size: var(--font-xs); }
 .line-cr { color: var(--color-danger-strong); font-weight: 600; font-size: var(--font-xs); }
 
+/* Collapsible DR/CR detail block in Advanced Mode list */
+.journal-lines-toggle {
+    margin-bottom: var(--space-sm);
+}
+
+.journal-lines-summary {
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    user-select: none;
+    padding: var(--space-2xs) 0;
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+}
+
+.journal-lines-summary::-webkit-details-marker { display: none; }
+.journal-lines-summary::marker { display: none; }
+
+.journal-lines-summary::before {
+    content: '▸';
+    font-size: var(--font-xs);
+    transition: transform var(--transition-fast);
+    display: inline-block;
+}
+
+.journal-lines-toggle[open] .journal-lines-summary::before {
+    transform: rotate(90deg);
+}
+
+.journal-lines-toggle[open] .journal-lines-display {
+    margin-top: var(--space-xs);
+}
+
 /* --- Pagination (BEM) --- */
 
 .pagination {

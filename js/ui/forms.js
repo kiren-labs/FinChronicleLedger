@@ -67,6 +67,7 @@
 
             container.innerHTML = `
                 <form id="transaction-form" data-type="transfer">
+                    <h3 class="form-heading">Add Transaction</h3>
                     <div class="form-type-toggle">
                         <button type="button" class="type-btn" data-type="income">Income</button>
                         <button type="button" class="type-btn" data-type="expense">Expense</button>
@@ -134,6 +135,7 @@
 
             container.innerHTML = `
                 <form id="transaction-form" data-type="${currentType}">
+                    <h3 class="form-heading">Add Transaction</h3>
                     <div class="form-type-toggle">
                         <button type="button" class="type-btn ${currentType === 'income' ? 'type-btn--active' : ''}" data-type="income">Income</button>
                         <button type="button" class="type-btn ${currentType === 'expense' ? 'type-btn--active' : ''}" data-type="expense">Expense</button>
