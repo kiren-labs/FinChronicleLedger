@@ -117,7 +117,8 @@
      */
     function formatCurrency(amount) {
         const symbol = Settings().getCurrencySymbol();
-        const formatted = Math.abs(amount).toLocaleString('en-IN', {
+        const locale = Settings().getCurrency() === 'INR' ? 'en-IN' : 'en-US';
+        const formatted = Math.abs(amount).toLocaleString(locale, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         });
