@@ -796,3 +796,39 @@
 [data-theme="dark"] .merge-preview-stats {
     background: var(--color-surface);
 }
+
+/* Payee Autocomplete */
+[data-theme="dark"] .payee-dropdown {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .payee-option:hover {
+    background: var(--color-bg);
+}
+
+[data-theme="dark"] .payee-row {
+    background: var(--color-surface);
+}
+
+/* Goals */
+[data-theme="dark"] .goal-card {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .goal-bar {
+    background: var(--color-surface);
+}
+
+/* Reconciliation */
+[data-theme="dark"] .recon-item {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .recon-balanced {
+    background: rgba(16, 185, 129, 0.15);
+}
+
+[data-theme="dark"] .recon-unbalanced {
+    background: rgba(239, 68, 68, 0.15);
+}

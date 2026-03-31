@@ -2,7 +2,7 @@
 
 ## Current Version
 
-**FinChronicleLedger v1.2.0**
+**FinChronicleLedger v1.3.0**
 
 ---
 

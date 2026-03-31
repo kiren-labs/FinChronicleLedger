@@ -182,7 +182,7 @@
         var account = {
             id: Validators().generateId(),
             code: code,
-            name: Validators().sanitizeHTML(name),
+            name: name,
             type: params.type,
             normalBalance: (params.type === 'asset' || params.type === 'expense') ? 'debit' : 'credit',
             isActive: true,
@@ -234,7 +234,7 @@
         if (newName.length > 100) return { success: false, error: 'Name cannot exceed 100 characters' };
 
         const updated = Object.assign({}, account, {
-            name: global.FCL.Validators.sanitizeHTML(newName.trim()),
+            name: newName.trim(),
             updatedAt: new Date().toISOString(),
         });
         await DB().updateAccount(updated);

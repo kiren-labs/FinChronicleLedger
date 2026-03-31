@@ -83,7 +83,9 @@
                 ${searching ? '<div class="search-status">Searching across all months</div>' : ''}
             </div>
             <div class="filters">
-                <div class="filter-months${searching ? ' filter-disabled' : ''}">${monthButtons}</div>
+                <div class="filter-months-scroll">
+                    <div class="filter-months${searching ? ' filter-disabled' : ''}">${monthButtons}</div>
+                </div>
                 ${tagFilterHTML}
             </div>
         `;
@@ -114,7 +116,7 @@
 
         // Bind month filter clicks (disabled when searching)
         if (!searching) {
-            container.querySelectorAll('.filter-btn[data-month]').forEach(btn => {
+            container.querySelectorAll('.filter-months .filter-btn[data-month]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     State().setCurrentMonth(btn.dataset.month);
                     State().setCurrentPage(1);
@@ -254,6 +256,7 @@
         let categoryName = '';
         let amountClass = '';
         let prefix = '';
+        const entryType = info ? info.type : 'expense';
 
         if (info) {
             if (info.type === 'transfer') {
@@ -272,7 +275,7 @@
         return `
             <div class="transaction-item" data-id="${R().escapeHTML(entry.id)}">
                 <div class="transaction-header">
-                    <span class="transaction-date">${R().formatDate(entry.date)}</span>
+                    <span class="transaction-date"><span class="type-dot type-dot--${entryType}"></span>${R().formatDate(entry.date)}</span>
                     <span class="transaction-amount ${amountClass}">${prefix}${R().formatCurrency(info ? info.amount : 0)}</span>
                 </div>
                 <div class="transaction-body">
@@ -303,10 +306,14 @@
         return `
             <div class="transaction-item transaction-item--advanced" data-id="${R().escapeHTML(entry.id)}">
                 <div class="transaction-header">
-                    <span class="transaction-date">${R().formatDate(entry.date)} • ${R().escapeHTML(entry.type)}</span>
+                    <span class="transaction-date"><span class="type-dot type-dot--${R().escapeHTML(entry.type)}"></span>${R().formatDate(entry.date)} • ${R().escapeHTML(entry.type)}</span>
+                    <span class="transaction-amount amount--${R().escapeHTML(entry.type)}">${R().formatCurrency(total)}</span>
                 </div>
                 <div class="transaction-description">${R().escapeHTML(entry.description || '')}</div>
-                <div class="journal-lines-display">${linesHTML}</div>
+                <details class="journal-lines-toggle">
+                    <summary class="journal-lines-summary">Details</summary>
+                    <div class="journal-lines-display">${linesHTML}</div>
+                </details>
                 ${_renderTagBadges(entry)}
                 <div class="transaction-actions">
                     <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
@@ -332,7 +339,7 @@
         return `
             <div class="transaction-item" data-id="${R().escapeHTML(entry.id)}">
                 <div class="transaction-header">
-                    <span class="transaction-date">${R().formatDate(entry.date)}</span>
+                    <span class="transaction-date"><span class="type-dot type-dot--${entry.type}"></span>${R().formatDate(entry.date)}</span>
                     <span class="transaction-amount ${amountClass}">${prefix}${R().formatCurrency(breakdown.total)}</span>
                 </div>
                 <div class="transaction-body">
@@ -354,6 +361,18 @@
     // =====================================================================
 
     function _bindListEvents() {
+        // Tap-to-expand: show Edit/Delete on row tap, hide on second tap
+        document.querySelectorAll('.transaction-item').forEach(item => {
+            item.addEventListener('click', function (e) {
+                if (e.target.closest('button') || e.target.closest('details')) return;
+                // Collapse any other expanded items first
+                document.querySelectorAll('.transaction-item--expanded').forEach(function (other) {
+                    if (other !== item) other.classList.remove('transaction-item--expanded');
+                });
+                item.classList.toggle('transaction-item--expanded');
+            });
+        });
+
         // Edit buttons
         document.querySelectorAll('.action-edit').forEach(btn => {
             btn.addEventListener('click', () => {

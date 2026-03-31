@@ -16,6 +16,8 @@
     const BudgetService = () => global.FCL.BudgetService;
     const TagService = () => global.FCL.TagService;
     const CSVImportService = () => global.FCL.CSVImportService;
+    const PayeeService = () => global.FCL.PayeeService;
+    const ReconciliationService = () => global.FCL.ReconciliationService;
     const FileIO = () => global.FCL.FileIO;
     const R = () => global.FCL.UI.Renderer;
     const Modals = () => global.FCL.UI.Modals;
@@ -95,6 +97,24 @@
                 </button>
             </div>
 
+            <!-- Payees -->
+            <div class="settings-section">
+                <h3>Payees</h3>
+                ${_renderPayeeList()}
+                <button class="btn btn--secondary btn--full" id="add-payee-btn">
+                    <i class="ri-user-add-line"></i> Add Payee
+                </button>
+            </div>
+
+            <!-- Reconciliation -->
+            <div class="settings-section">
+                <h3>Reconciliation</h3>
+                ${_renderReconciliationList()}
+                <button class="btn btn--secondary btn--full" id="start-recon-btn">
+                    <i class="ri-scales-3-line"></i> Start New Reconciliation
+                </button>
+            </div>
+
             <!-- Backup Status -->
             <div class="settings-section">
                 <h3>Backup Status</h3>
@@ -165,6 +185,8 @@
         _bindAccountEvents();
         _bindTagEvents();
         _bindCSVImportEvents();
+        _bindPayeeEvents();
+        _bindReconciliationEvents();
         _applyBarWidths(container);
     }
 
@@ -887,6 +909,406 @@
                 }
             });
         }
+    }
+
+    // =====================================================================
+    // Payee Management UI
+    // =====================================================================
+
+    function _renderPayeeList() {
+        if (!PayeeService()) return '<p class="text-muted">Loading payees...</p>';
+        var payees = PayeeService().getAllPayees();
+        if (payees.length === 0) {
+            return '<p class="text-muted">No payees created yet. Payees are auto-created when you add transactions.</p>';
+        }
+
+        return '<div class="payee-list">' + payees.map(function (p) {
+            var txCount = PayeeService().getTransactionsForPayee(p.id).length;
+            return '<div class="payee-row">'
+                + '<span class="payee-row-name">' + R().escapeHTML(p.name) + '</span>'
+                + '<span class="text-muted payee-row-usage">' + txCount + ' txn' + (txCount !== 1 ? 's' : '') + '</span>'
+                + '<span class="payee-row-actions">'
+                + '<button class="btn btn--ghost btn--small payee-edit-btn" data-payee-id="' + R().escapeHTML(p.id) + '" title="Edit"><i class="ri-pencil-line"></i></button>'
+                + '<button class="btn btn--ghost btn--small btn--danger payee-delete-btn" data-payee-id="' + R().escapeHTML(p.id) + '" title="Delete"><i class="ri-delete-bin-line"></i></button>'
+                + '</span>'
+                + '</div>';
+        }).join('') + '</div>';
+    }
+
+    function _bindPayeeEvents() {
+        var addBtn = document.getElementById('add-payee-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function () { _showPayeeForm(); });
+        }
+
+        document.querySelectorAll('.payee-edit-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { _showPayeeForm(btn.dataset.payeeId); });
+        });
+
+        document.querySelectorAll('.payee-delete-btn').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                var payee = PayeeService().getPayeeById(btn.dataset.payeeId);
+                if (!payee) return;
+                var txCount = PayeeService().getTransactionsForPayee(payee.id).length;
+                var msg = 'Delete payee "' + payee.name + '"?';
+                if (txCount > 0) msg += ' It will be unlinked from ' + txCount + ' transaction' + (txCount !== 1 ? 's' : '') + '.';
+                if (confirm(msg)) {
+                    await PayeeService().deletePayee(payee.id);
+                    R().showToast('Payee deleted', 'info');
+                    render();
+                }
+            });
+        });
+    }
+
+    function _showPayeeForm(editPayeeId) {
+        var mount = document.getElementById('modalMount');
+        if (!mount) return;
+
+        var existing = editPayeeId ? PayeeService().getPayeeById(editPayeeId) : null;
+        var expenseAccounts = AccountService().getActiveAccountsByType('expense');
+        var incomeAccounts = AccountService().getActiveAccountsByType('income');
+        var categoryAccounts = expenseAccounts.concat(incomeAccounts);
+
+        var catOptions = '<option value="">None</option>' + categoryAccounts.map(function (a) {
+            var sel = existing && existing.defaultCategoryAccountId === a.id ? ' selected' : '';
+            return '<option value="' + R().escapeHTML(a.id) + '"' + sel + '>' + R().escapeHTML(a.name) + '</option>';
+        }).join('');
+
+        mount.innerHTML = '<div class="modal-overlay" id="payee-modal-overlay">'
+            + '<div class="modal">'
+            + '<h3>' + (existing ? 'Edit Payee' : 'Add Payee') + '</h3>'
+            + '<form id="payee-form">'
+            + '<div class="form-group">'
+            + '<label for="payee-name">Payee Name</label>'
+            + '<input type="text" id="payee-name" required minlength="1" maxlength="100" placeholder="e.g. Amazon" value="' + (existing ? R().escapeHTML(existing.name) : '') + '">'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label for="payee-category">Default Category (optional)</label>'
+            + '<select id="payee-category">' + catOptions + '</select>'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label for="payee-notes">Notes (optional)</label>'
+            + '<input type="text" id="payee-notes" maxlength="500" placeholder="Notes" value="' + (existing ? R().escapeHTML(existing.notes || '') : '') + '">'
+            + '</div>'
+            + '<button type="submit" class="btn btn--primary btn--full">' + (existing ? 'Save Changes' : 'Add Payee') + '</button>'
+            + '<button type="button" class="btn btn--secondary btn--full" id="payee-form-cancel">Cancel</button>'
+            + '</form>'
+            + '</div>'
+            + '</div>';
+
+        document.getElementById('payee-form-cancel').addEventListener('click', function () { mount.innerHTML = ''; });
+        document.getElementById('payee-modal-overlay').addEventListener('click', function (e) {
+            if (e.target.id === 'payee-modal-overlay') mount.innerHTML = '';
+        });
+
+        document.getElementById('payee-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var name = document.getElementById('payee-name').value;
+            var catId = document.getElementById('payee-category').value || null;
+            var notes = document.getElementById('payee-notes').value;
+            var result;
+            if (existing) {
+                result = await PayeeService().updatePayee(existing.id, { name: name, defaultCategoryAccountId: catId, notes: notes });
+            } else {
+                result = await PayeeService().createPayee(name, catId);
+                if (result.success && notes) {
+                    await PayeeService().updatePayee(result.payee.id, { notes: notes });
+                }
+            }
+            if (result.success) {
+                R().showToast(existing ? 'Payee updated' : 'Payee added!', 'success');
+                mount.innerHTML = '';
+                render();
+            } else {
+                R().showToast(result.errors[0] || 'Error', 'error');
+            }
+        });
+    }
+
+    // =====================================================================
+    // Reconciliation UI
+    // =====================================================================
+
+    function _renderReconciliationList() {
+        if (!ReconciliationService()) return '<p class="text-muted">Loading...</p>';
+        var recons = ReconciliationService().getAllReconciliations();
+        if (recons.length === 0) {
+            return '<p class="text-muted">No reconciliations yet. Compare your app data with bank statements.</p>';
+        }
+
+        return '<div class="recon-list">' + recons.map(function (r) {
+            var acc = AccountService().getAccountById(r.accountId);
+            var accName = acc ? R().escapeHTML(acc.name) : 'Unknown';
+            var statusCls = r.status === 'completed' ? 'recon-completed'
+                : r.status === 'in-progress' ? 'recon-active' : 'recon-draft';
+            var summary = ReconciliationService().getReconciliationSummary(r.id);
+            var matchInfo = summary ? summary.matchedCount + ' matched' : '';
+
+            return '<div class="recon-item ' + statusCls + '">'
+                + '<div class="recon-item-header">'
+                + '<strong>' + accName + ' — ' + R().escapeHTML(r.month) + '</strong>'
+                + '<span class="recon-status-badge">' + R().escapeHTML(r.status) + '</span>'
+                + '</div>'
+                + '<div class="recon-item-meta">'
+                + '<span>' + matchInfo + '</span>'
+                + (summary && summary.difference !== 0 ? '<span class="text-warning">Diff: ' + R().formatCurrency(summary.difference) + '</span>' : '')
+                + '</div>'
+                + '<div class="recon-item-actions">'
+                + (r.status !== 'completed' ? '<button class="btn btn--small btn--primary recon-open-btn" data-recon-id="' + R().escapeHTML(r.id) + '">Open</button>' : '')
+                + '<button class="btn btn--small btn--ghost btn--danger recon-delete-btn" data-recon-id="' + R().escapeHTML(r.id) + '">Delete</button>'
+                + '</div>'
+                + '</div>';
+        }).join('') + '</div>';
+    }
+
+    function _bindReconciliationEvents() {
+        var startBtn = document.getElementById('start-recon-btn');
+        if (startBtn) {
+            startBtn.addEventListener('click', function () { _showStartReconForm(); });
+        }
+
+        document.querySelectorAll('.recon-open-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { _showReconWizard(btn.dataset.reconId); });
+        });
+
+        document.querySelectorAll('.recon-delete-btn').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                if (confirm('Delete this reconciliation?')) {
+                    await ReconciliationService().deleteReconciliation(btn.dataset.reconId);
+                    R().showToast('Reconciliation deleted', 'info');
+                    render();
+                }
+            });
+        });
+    }
+
+    function _showStartReconForm() {
+        var mount = document.getElementById('modalMount');
+        if (!mount) return;
+
+        var assetAccounts = AccountService().getActiveAccountsByType('asset');
+        var liabilityAccounts = AccountService().getActiveAccountsByType('liability');
+        var allAccounts = assetAccounts.concat(liabilityAccounts);
+        var today = new Date();
+        var currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+
+        var acctOptions = allAccounts.map(function (a) {
+            return '<option value="' + R().escapeHTML(a.id) + '">' + R().escapeHTML(a.name) + '</option>';
+        }).join('');
+
+        mount.innerHTML = '<div class="modal-overlay" id="recon-start-overlay">'
+            + '<div class="modal">'
+            + '<h3>Start Reconciliation</h3>'
+            + '<form id="recon-start-form">'
+            + '<div class="form-group">'
+            + '<label for="recon-account">Account</label>'
+            + '<select id="recon-account" required>' + acctOptions + '</select>'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label for="recon-month">Month</label>'
+            + '<input type="month" id="recon-month" value="' + currentMonth + '" required>'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label for="recon-opening">Opening Balance</label>'
+            + '<input type="number" id="recon-opening" step="0.01" value="0" required inputmode="decimal">'
+            + '</div>'
+            + '<button type="submit" class="btn btn--primary btn--full">Start</button>'
+            + '<button type="button" class="btn btn--secondary btn--full" id="recon-start-cancel">Cancel</button>'
+            + '</form>'
+            + '</div>'
+            + '</div>';
+
+        document.getElementById('recon-start-cancel').addEventListener('click', function () { mount.innerHTML = ''; });
+        document.getElementById('recon-start-overlay').addEventListener('click', function (e) {
+            if (e.target.id === 'recon-start-overlay') mount.innerHTML = '';
+        });
+
+        document.getElementById('recon-start-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var accountId = document.getElementById('recon-account').value;
+            var month = document.getElementById('recon-month').value;
+            var opening = parseFloat(document.getElementById('recon-opening').value);
+
+            var result = await ReconciliationService().startReconciliation(accountId, month, opening);
+            if (result.success) {
+                mount.innerHTML = '';
+                R().showToast(result.resumed ? 'Resuming draft reconciliation' : 'Reconciliation started!', 'success');
+                _showReconWizard(result.reconciliation.id);
+            } else {
+                R().showToast(result.errors[0] || 'Error', 'error');
+            }
+        });
+    }
+
+    function _showReconWizard(reconId) {
+        var mount = document.getElementById('modalMount');
+        if (!mount) return;
+
+        var recon = ReconciliationService().getReconciliationById(reconId);
+        if (!recon) return;
+
+        var acc = AccountService().getAccountById(recon.accountId);
+        var accName = acc ? R().escapeHTML(acc.name) : 'Unknown';
+        var summary = ReconciliationService().getReconciliationSummary(reconId);
+
+        // Build matched transactions list
+        var matchedHTML = '';
+        var bankTxns = recon.unmatchedBankTransactions || [];
+        var matchedTxns = bankTxns.filter(function (t) { return t.matched; });
+        var unmatchedBankTxns = bankTxns.filter(function (t) { return !t.matched; });
+
+        if (matchedTxns.length > 0) {
+            matchedHTML = '<div class="recon-section"><h4>Matched (' + matchedTxns.length + ')</h4>'
+                + matchedTxns.map(function (t) {
+                    return '<div class="recon-match-row">'
+                        + '<span class="recon-match-check"><i class="ri-check-line"></i></span>'
+                        + '<span>' + R().escapeHTML(t.date) + '</span>'
+                        + '<span>' + R().escapeHTML(t.description) + '</span>'
+                        + '<span>' + R().formatCurrency(t.amount) + '</span>'
+                        + '<button class="btn btn--ghost btn--small recon-unmatch-btn" data-bank-idx="' + t.index + '" title="Unmatch"><i class="ri-close-line"></i></button>'
+                        + '</div>';
+                }).join('') + '</div>';
+        }
+
+        // Unmatched bank transactions
+        var unmatchedBankHTML = '';
+        if (unmatchedBankTxns.length > 0) {
+            unmatchedBankHTML = '<div class="recon-section"><h4>Unmatched Bank Items (' + unmatchedBankTxns.length + ')</h4>'
+                + unmatchedBankTxns.map(function (t) {
+                    return '<div class="recon-unmatched-row">'
+                        + '<span class="recon-unmatched-icon"><i class="ri-question-line"></i></span>'
+                        + '<span>' + R().escapeHTML(t.date) + '</span>'
+                        + '<span>' + R().escapeHTML(t.description) + '</span>'
+                        + '<span>' + R().formatCurrency(t.amount) + '</span>'
+                        + '</div>';
+                }).join('') + '</div>';
+        }
+
+        // Unmatched app transactions
+        var unmatchedAppHTML = '';
+        var unmatchedAppIds = recon.unmatchedAppTransactionIds || [];
+        if (unmatchedAppIds.length > 0) {
+            var entries = State().getEntries();
+            unmatchedAppHTML = '<div class="recon-section"><h4>Unmatched App Items (' + unmatchedAppIds.length + ')</h4>'
+                + unmatchedAppIds.map(function (id) {
+                    var entry = entries.find(function (e) { return e.id === id; });
+                    if (!entry) return '';
+                    var total = global.FCL.Ledger.getEntryTotal(entry);
+                    return '<div class="recon-unmatched-row">'
+                        + '<span>' + R().escapeHTML(entry.date) + '</span>'
+                        + '<span>' + R().escapeHTML(entry.description || entry.type) + '</span>'
+                        + '<span>' + R().formatCurrency(total) + '</span>'
+                        + '</div>';
+                }).join('') + '</div>';
+        }
+
+        // Balance summary
+        var balanceHTML = '';
+        if (summary) {
+            var diffClass = summary.difference === 0 ? 'recon-balanced' : 'recon-unbalanced';
+            balanceHTML = '<div class="recon-balance ' + diffClass + '">'
+                + '<div>Bank closing: ' + R().formatCurrency(summary.bankClosingBalance) + '</div>'
+                + '<div>App closing: ' + R().formatCurrency(summary.closingBalance) + '</div>'
+                + '<div>Difference: <strong>' + R().formatCurrency(summary.difference) + '</strong></div>'
+                + '</div>';
+        }
+
+        var hasBank = bankTxns.length > 0;
+
+        mount.innerHTML = '<div class="modal-overlay" id="recon-wizard-overlay">'
+            + '<div class="modal modal--wide recon-wizard">'
+            + '<h3>Reconcile: ' + accName + ' — ' + R().escapeHTML(recon.month) + '</h3>'
+            + balanceHTML
+            + (!hasBank ? '<div class="recon-section">'
+                + '<p>Import a bank statement CSV to begin matching.</p>'
+                + '<input type="file" id="recon-csv-input" accept=".csv" class="hidden">'
+                + '<button class="btn btn--secondary btn--full" id="recon-import-btn"><i class="ri-upload-line"></i> Import Bank Statement CSV</button>'
+                + '</div>' : '')
+            + matchedHTML
+            + unmatchedBankHTML
+            + unmatchedAppHTML
+            + (hasBank ? '<div class="recon-actions">'
+                + '<button class="btn btn--primary" id="recon-auto-match">Auto-Match</button>'
+                + '<button class="btn btn--secondary" id="recon-complete">Complete Reconciliation</button>'
+                + '</div>' : '')
+            + '<button class="btn btn--ghost btn--full" id="recon-wizard-close">Close</button>'
+            + '</div>'
+            + '</div>';
+
+        // Close
+        document.getElementById('recon-wizard-close').addEventListener('click', function () {
+            mount.innerHTML = '';
+            render();
+        });
+        document.getElementById('recon-wizard-overlay').addEventListener('click', function (e) {
+            if (e.target.id === 'recon-wizard-overlay') {
+                mount.innerHTML = '';
+                render();
+            }
+        });
+
+        // Import CSV
+        var importBtn = document.getElementById('recon-import-btn');
+        var csvInput = document.getElementById('recon-csv-input');
+        if (importBtn && csvInput) {
+            importBtn.addEventListener('click', function () { csvInput.click(); });
+            csvInput.addEventListener('change', async function (ev) {
+                var file = ev.target.files[0];
+                if (!file) return;
+                try {
+                    var text = await FileIO().readFile(file);
+                    var result = await ReconciliationService().importBankStatement(reconId, text);
+                    if (result.success) {
+                        R().showToast('Imported ' + result.importedCount + ' bank transactions', 'success');
+                        _showReconWizard(reconId); // re-render wizard
+                    } else {
+                        R().showToast(result.errors[0] || 'Import failed', 'error');
+                    }
+                } catch (err) {
+                    R().showToast('Error reading file: ' + err.message, 'error');
+                }
+            });
+        }
+
+        // Auto-match
+        var autoMatchBtn = document.getElementById('recon-auto-match');
+        if (autoMatchBtn) {
+            autoMatchBtn.addEventListener('click', async function () {
+                var result = await ReconciliationService().autoMatch(reconId);
+                if (result.success) {
+                    R().showToast(result.matchCount + ' transactions matched', 'success');
+                    _showReconWizard(reconId);
+                } else {
+                    R().showToast(result.errors[0] || 'Error', 'error');
+                }
+            });
+        }
+
+        // Complete
+        var completeBtn = document.getElementById('recon-complete');
+        if (completeBtn) {
+            completeBtn.addEventListener('click', async function () {
+                var result = await ReconciliationService().completeReconciliation(reconId);
+                if (result.success) {
+                    R().showToast('Reconciliation completed!', 'success');
+                    mount.innerHTML = '';
+                    render();
+                } else {
+                    R().showToast(result.errors[0] || 'Error', 'error');
+                }
+            });
+        }
+
+        // Unmatch buttons
+        document.querySelectorAll('.recon-unmatch-btn').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                var result = await ReconciliationService().unmatch(reconId, parseInt(btn.dataset.bankIdx, 10));
+                if (result.success) {
+                    _showReconWizard(reconId);
+                }
+            });
+        });
     }
 
     // =====================================================================

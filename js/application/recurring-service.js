@@ -139,7 +139,13 @@
 
                 if (template.autoCreate) {
                     // Auto-create the transaction
-                    var result = await _createTransactionFromTemplate(template, dueDate);
+                    var result;
+                    try {
+                        result = await _createTransactionFromTemplate(template, dueDate);
+                    } catch (err) {
+                        console.error('[FCL] Recurring auto-create failed for template', template.id, err);
+                        result = { success: false };
+                    }
                     var historyRecord = Recurring().createHistoryRecord({
                         templateId: template.id,
                         dueDate: dueDate,

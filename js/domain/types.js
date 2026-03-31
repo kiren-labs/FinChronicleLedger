@@ -8,7 +8,7 @@
     // =====================================================================
     // App Metadata
     // =====================================================================
-    const APP_VERSION = '1.2.0';
+    const APP_VERSION = '1.3.0';
     const APP_NAME = 'FinChronicleLedger';
 
     // =====================================================================
@@ -138,6 +138,29 @@
     });
 
     // =====================================================================
+    // Budget Status
+    // =====================================================================
+    const BudgetStatus = Object.freeze({
+        ON_TRACK: 'on-track',
+        APPROACHING: 'approaching',
+        OVER: 'over',
+    });
+
+    // =====================================================================
+    // Display Constants
+    // =====================================================================
+    const MONTHS_SHORT = Object.freeze([
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ]);
+    const MONTHS_LONG = Object.freeze([
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December',
+    ]);
+    const TOAST_DURATION_SHORT = 2500;  // standard toast
+    const TOAST_DURATION_LONG  = 8000;  // toast with action button (e.g. Undo)
+
+    // =====================================================================
     // Export
     // =====================================================================
     global.FCL = global.FCL || {};
@@ -155,6 +178,11 @@
         MIN_DATE_YEAR,
         ITEMS_PER_PAGE,
         BALANCE_TOLERANCE,
+        BudgetStatus,
+        MONTHS_SHORT,
+        MONTHS_LONG,
+        TOAST_DURATION_SHORT,
+        TOAST_DURATION_LONG,
         Currencies,
         SimpleCategories,
         CategoryAccountMap,

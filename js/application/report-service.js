@@ -36,6 +36,8 @@
 
         const incomeDelta = Reports().getMoMDelta(totals.income, prevTotals.income);
         const expenseDelta = Reports().getMoMDelta(totals.expense, prevTotals.expense);
+        const netDelta = Reports().getMoMDelta(totals.net, prevTotals.net);
+        const countDelta = Reports().getMoMDelta(totals.count, prevTotals.count);
 
         return {
             month,
@@ -46,6 +48,8 @@
             expensePercentage: expensePct,
             incomeDelta,
             expenseDelta,
+            netDelta,
+            countDelta,
             topCategories,
             budgetHealth,
         };
@@ -83,10 +87,13 @@
             .filter(Boolean)
             .sort((a, b) => a.code - b.code);
 
+        const totalDebits = Accounting().round2(rows.reduce((s, r) => s + r.debit, 0));
+        const totalCredits = Accounting().round2(rows.reduce((s, r) => s + r.credit, 0));
+
         return {
             rows,
-            totalDebits: verification.totalDebits,
-            totalCredits: verification.totalCredits,
+            totalDebits,
+            totalCredits,
             balanced: verification.balanced,
             difference: verification.difference,
         };

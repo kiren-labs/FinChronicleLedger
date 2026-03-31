@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] — 2025-07-15
+
+### Added
+
+#### Payee Management (#8, P1)
+- **Payee autocomplete** on the Add Transaction form — type to search, select, or create new payees inline
+- Payee data model: `{id, name, defaultCategoryAccountId, notes, createdAt}` stored in IndexedDB `payees` store
+- Full CRUD in `PayeeService`: create, update, delete, find-or-create, autocomplete search
+- Spending-by-payee analysis: `getPayeeSpending(month?)` with ranked results
+- **Payee management** section in Settings — list all payees with transaction counts, add/edit/delete
+- Payees are automatically persisted when transactions are saved with a payee
+
+#### Financial Goals Tracking (#10, P1)
+- **New "Goals" tab** in bottom navigation with dedicated UI
+- Goal cards with progress bars, percentage, current/target amounts
+- Goal data model: `{id, name, targetAmount, targetDate, linkedAccountId, status, milestones, createdAt, completedAt}`
+- Goal contributions stored separately: `{id, goalId, date, amount, transactionId, notes, createdAt}` in `goal_contributions` store
+- Create, edit, pause, resume, and delete goals
+- **Contribution flow**: add contributions with amount, date, and optional notes
+- **Milestone tracking**: automatic detection of 25%, 50%, 75%, 100% milestones
+- **Auto-completion**: goals automatically marked as completed when 100% is reached
+- **Pace calculation**: monthly needed vs. current pace to reach target by deadline
+- Click goal card to view all contributions with ability to remove individual entries
+
+#### Transaction Reconciliation (#9, P1)
+- **Reconciliation wizard** accessible from Settings tab
+- Start reconciliation by selecting account, month, and opening balance
+- **Import bank statement CSV** — parses Date, Description, Amount columns with date normalization
+- **Auto-matching** engine: matches bank transactions to app entries by date and amount
+- Matched/unmatched transaction display with unmatch capability
+- **Balance comparison**: bank closing vs. app closing with difference display
+- Complete reconciliation flow: draft → in-progress → completed
+- Reconciliation data model stored in `reconciliations` IndexedDB store
+- Support for multiple reconciliations per account (by month)
+
+### Changed
+- IndexedDB schema upgraded from v4 to v7 (v5: payees, v6: goals+contributions, v7: reconciliations)
+- Service Worker cache bumped to `finchronicle-ledger-v1.3.0`
+- Bottom navigation now has 6 buttons (Add, List, Groups, Reports, Goals, Settings)
+- State management extended with payees, goals, contributions, and reconciliations arrays
+- App initialization sequence extended to load payees, goals, and reconciliations after tags
+
+---
+
 ## [1.2.0] — 2026-03-31
 
 ### Added

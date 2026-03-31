@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](VERSION.md)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](VERSION.md)
 [![Code of Conduct](https://img.shields.io/badge/code%20of%20conduct-contributor%20covenant-purple.svg)](CODE_OF_CONDUCT.md)
 [![Security](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
 
@@ -221,6 +221,32 @@ Users can switch modes freely from Settings. Both modes use the same underlying 
 | Safari (iOS) | 15+ | Full support |
 | Firefox | 90+ | Full support |
 | Samsung Internet | 15+ | Full support |
+
+---
+
+## Testing (Zero Dependency)
+
+This project keeps the core architecture dependency-free. Service-layer tests use Node's built-in test runner (`node:test`) and require no npm packages.
+
+Run all service tests:
+
+```bash
+node --test tests/*.test.js
+```
+
+Run a single suite:
+
+```bash
+node --test tests/payee-service.test.js
+node --test tests/goal-service.test.js
+node --test tests/reconciliation-service.test.js
+```
+
+Optional built-in coverage (Node version dependent):
+
+```bash
+node --test --experimental-test-coverage tests/*.test.js
+```
 
 ---
 

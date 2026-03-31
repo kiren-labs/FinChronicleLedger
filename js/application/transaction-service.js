@@ -274,9 +274,17 @@
     function _commitPendingDelete() {
         if (!_pendingDelete) return;
         clearTimeout(_pendingDelete.timer);
-        var entry = _pendingDelete.entry;
+        const entry = _pendingDelete.entry;
         _pendingDelete = null;
-        DB().deleteJournalEntry(entry.id);
+        DB().deleteJournalEntry(entry.id).catch(function (err) {
+            console.error('[FCL] Failed to delete entry from IndexedDB:', err);
+            // Entry is already removed from State — restore it so data is consistent
+            State().addEntry(entry);
+            if (R()) {
+                R().showToast('Delete failed — transaction restored', 'error');
+                R().updateUI();
+            }
+        });
     }
 
     /**

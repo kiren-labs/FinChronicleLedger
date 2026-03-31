@@ -424,6 +424,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 input[type="number"] {
     -moz-appearance: textfield;
+    appearance: textfield;
     font-family: var(--font-family-mono);
 }
 
@@ -783,6 +784,7 @@ button.primary.loading .btn-spinner {
         white-space: normal;
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
@@ -2392,7 +2394,7 @@ button.primary.loading .btn-spinner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-md) var(--space-lg);
+    padding: var(--space-sm) var(--space-lg) var(--space-xs);
     cursor: pointer;
     user-select: none;
     border-radius: var(--radius-lg);
@@ -2469,8 +2471,8 @@ button.primary.loading .btn-spinner {
 .summary-tiles {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
 }
 
 .tile {
@@ -2529,9 +2531,34 @@ button.primary.loading .btn-spinner {
     padding: var(--space-sm) var(--space-md);
     background: var(--color-bg);
     border-radius: var(--radius-md);
-    text-align: center;
     margin-bottom: var(--space-md);
 }
+
+.summary-ratio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xs);
+}
+
+.summary-ratio-label {
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+}
+
+.summary-ratio-pct {
+    font-size: var(--font-sm);
+    font-weight: 600;
+}
+
+.summary-ratio.ratio--ok .budget-bar-fill { background: var(--color-income); }
+.summary-ratio.ratio--ok .summary-ratio-pct { color: var(--color-income); }
+
+.summary-ratio.ratio--approaching .budget-bar-fill { background: var(--color-warning, #f59e0b); }
+.summary-ratio.ratio--approaching .summary-ratio-pct { color: var(--color-warning, #f59e0b); }
+
+.summary-ratio.ratio--over .budget-bar-fill { background: var(--color-expense); }
+.summary-ratio.ratio--over .summary-ratio-pct { color: var(--color-expense); }
 
 .summary-net-worth {
     display: flex;
@@ -2693,6 +2720,41 @@ button.primary.loading .btn-spinner {
 
 .line-dr { color: var(--color-success-strong); font-weight: 600; font-size: var(--font-xs); }
 .line-cr { color: var(--color-danger-strong); font-weight: 600; font-size: var(--font-xs); }
+
+/* Collapsible DR/CR detail block in Advanced Mode list */
+.journal-lines-toggle {
+    margin-bottom: var(--space-sm);
+}
+
+.journal-lines-summary {
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    user-select: none;
+    padding: var(--space-2xs) 0;
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+}
+
+.journal-lines-summary::-webkit-details-marker { display: none; }
+.journal-lines-summary::marker { display: none; }
+
+.journal-lines-summary::before {
+    content: '▸';
+    font-size: var(--font-xs);
+    transition: transform var(--transition-fast);
+    display: inline-block;
+}
+
+.journal-lines-toggle[open] .journal-lines-summary::before {
+    transform: rotate(90deg);
+}
+
+.journal-lines-toggle[open] .journal-lines-display {
+    margin-top: var(--space-xs);
+}
 
 /* --- Pagination (BEM) --- */
 
@@ -4162,4 +4224,496 @@ details.faq-item p {
 
 .merge-preview-stats p {
     margin-bottom: var(--space-xs);
+}
+
+/* ==========================================================================
+   Payee Autocomplete
+   ========================================================================== */
+
+.payee-autocomplete {
+    position: relative;
+}
+
+.payee-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.payee-dropdown.hidden {
+    display: none;
+}
+
+.payee-option {
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    font-size: var(--font-sm);
+    transition: background var(--transition-fast);
+}
+
+.payee-option:hover {
+    background: var(--color-bg);
+}
+
+.payee-create {
+    color: var(--color-primary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    border-top: 1px solid var(--color-border);
+}
+
+/* Payee settings list */
+.payee-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+.payee-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+}
+
+.payee-row-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.payee-row-usage {
+    font-size: var(--font-sm);
+}
+
+.payee-row-actions {
+    display: flex;
+    gap: var(--space-2xs);
+}
+
+/* ==========================================================================
+   Financial Goals
+   ========================================================================== */
+
+.goals-empty {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-lg);
+}
+
+.goals-empty-icon {
+    font-size: 3rem;
+    color: var(--color-text-muted);
+    display: block;
+    margin-bottom: var(--space-md);
+}
+
+.goals-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+}
+
+.goals-header h2 {
+    font-size: var(--font-lg);
+    font-weight: 700;
+}
+
+.goals-section {
+    margin-bottom: var(--space-lg);
+}
+
+.goals-section-title {
+    font-size: var(--font-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.goal-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: box-shadow var(--transition-fast);
+}
+
+.goal-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.goal-card--paused {
+    opacity: 0.7;
+}
+
+.goal-card--completed {
+    border-left: 3px solid var(--color-success);
+}
+
+.goal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-sm);
+}
+
+.goal-card-name {
+    font-size: var(--font-base);
+    font-weight: 600;
+}
+
+.goal-card-meta {
+    display: flex;
+    gap: var(--space-sm);
+    font-size: var(--font-xs);
+    color: var(--color-text-muted);
+}
+
+.goal-progress {
+    margin-bottom: var(--space-sm);
+}
+
+.goal-amounts {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-2xs);
+}
+
+.goal-current {
+    font-weight: 600;
+    font-size: var(--font-md);
+}
+
+.goal-target {
+    color: var(--color-text-muted);
+    font-size: var(--font-sm);
+}
+
+.goal-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--color-bg);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    margin-bottom: var(--space-2xs);
+}
+
+.goal-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    transition: width var(--transition-med);
+    background: var(--color-primary);
+}
+
+.goal-bar-fill.goal-pct--near {
+    background: var(--color-warning, #f59e0b);
+}
+
+.goal-bar-fill.goal-pct--complete {
+    background: var(--color-success);
+}
+
+.goal-pct {
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.goal-pace {
+    display: flex;
+    gap: var(--space-md);
+    font-size: var(--font-xs);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.goal-milestones {
+    display: flex;
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-sm);
+}
+
+.goal-milestone-badge {
+    background: var(--color-success);
+    color: #fff;
+    font-size: var(--font-xs);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+}
+
+.goal-card-actions {
+    display: flex;
+    gap: var(--space-xs);
+    justify-content: flex-end;
+}
+
+/* Contribution list modal */
+.contrib-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.contrib-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.contrib-date {
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+    min-width: 80px;
+}
+
+.contrib-amount {
+    font-weight: 600;
+    color: var(--color-success);
+}
+
+.contrib-notes {
+    flex: 1;
+    font-size: var(--font-sm);
+}
+
+/* ==========================================================================
+   Reconciliation
+   ========================================================================== */
+
+.recon-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.recon-item {
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+}
+
+.recon-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xs);
+}
+
+.recon-status-badge {
+    font-size: var(--font-xs);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    text-transform: capitalize;
+    background: var(--color-text-muted);
+    color: #fff;
+}
+
+.recon-completed .recon-status-badge {
+    background: var(--color-success);
+}
+
+.recon-active .recon-status-badge {
+    background: var(--color-primary);
+}
+
+.recon-item-meta {
+    display: flex;
+    gap: var(--space-md);
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.recon-item-actions {
+    display: flex;
+    gap: var(--space-xs);
+    justify-content: flex-end;
+}
+
+/* Reconciliation wizard */
+.modal--wide {
+    max-width: 560px;
+    width: 100%;
+}
+
+.recon-wizard {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.recon-balance {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    font-size: var(--font-sm);
+}
+
+.recon-balanced {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+}
+
+.recon-unbalanced {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger);
+}
+
+.recon-section {
+    margin-bottom: var(--space-md);
+}
+
+.recon-section h4 {
+    font-size: var(--font-sm);
+    margin-bottom: var(--space-sm);
+    color: var(--color-text-muted);
+}
+
+.recon-match-row,
+.recon-unmatched-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.recon-match-check {
+    color: var(--color-success);
+}
+
+.recon-unmatched-icon {
+    color: var(--color-warning, #f59e0b);
+}
+
+.recon-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin: var(--space-md) 0;
+}
+
+/* ==========================================================================
+   UI/UX Improvements — Phase C
+   ========================================================================== */
+
+/* --- #6: Tap-to-expand Edit/Delete actions --- */
+
+.transaction-list .transaction-item {
+    cursor: pointer;
+}
+
+.transaction-list .transaction-item .transaction-actions {
+    display: none;
+    margin-top: var(--space-sm);
+    margin-left: 0;
+}
+
+.transaction-list .transaction-item.transaction-item--expanded .transaction-actions {
+    display: flex;
+}
+
+.transaction-list .transaction-item.transaction-item--expanded {
+    background: var(--color-bg);
+}
+
+/* --- #7: Month filter scroll hint (mask fade at right edge) --- */
+
+.filter-months-scroll {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.filter-months {
+    display: flex;
+    gap: var(--space-sm);
+    overflow-x: auto;
+    padding: var(--space-2xs) 0;
+    padding-right: var(--space-2xl);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    mask-image: linear-gradient(to right, black 80%, transparent 100%);
+}
+
+.filter-months::-webkit-scrollbar {
+    display: none;
+}
+
+/* Remove old overflow from .filters now that .filter-months handles its own scroll */
+.filters {
+    overflow-x: visible;
+}
+
+/* --- #8: Type colour dot in list row header --- */
+
+.type-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: var(--space-2xs);
+    flex-shrink: 0;
+}
+
+.type-dot--income   { background: var(--color-success-strong); }
+.type-dot--expense  { background: var(--color-danger-strong); }
+.type-dot--transfer { background: var(--color-primary); }
+.type-dot--opening  { background: var(--color-text-muted); }
+
+/* --- #9: Floating Action Button (+) --- */
+
+.fab {
+    position: fixed;
+    bottom: calc(72px + var(--space-xl));
+    right: var(--space-xl);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    cursor: pointer;
+    font-size: var(--font-3xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg, 0 4px 16px rgba(0, 81, 213, 0.35));
+    z-index: 900;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 81, 213, 0.45);
+}
+
+.fab:active {
+    transform: scale(0.93);
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .fab {
+        bottom: calc(72px + var(--space-xl) + env(safe-area-inset-bottom));
+    }
 }
