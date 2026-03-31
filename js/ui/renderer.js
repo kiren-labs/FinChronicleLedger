@@ -33,6 +33,8 @@
                 if (global.FCL.UI.Groups) global.FCL.UI.Groups.render(mode);
             } else if (activeTab === 'reports') {
                 if (global.FCL.UI.ReportsUI) global.FCL.UI.ReportsUI.render();
+            } else if (activeTab === 'goals') {
+                if (global.FCL.UI.GoalsUI) global.FCL.UI.GoalsUI.render();
             } else if (activeTab === 'settings') {
                 if (global.FCL.UI.SettingsUI) global.FCL.UI.SettingsUI.render();
             }

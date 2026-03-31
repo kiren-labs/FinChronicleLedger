@@ -25,6 +25,9 @@
     const RecurringService = () => global.FCL.RecurringService;
     const BudgetService = () => global.FCL.BudgetService;
     const TagService = () => global.FCL.TagService;
+    const PayeeService = () => global.FCL.PayeeService;
+    const GoalService = () => global.FCL.GoalService;
+    const ReconciliationService = () => global.FCL.ReconciliationService;
     const Renderer = () => global.FCL.UI.Renderer;
     const Navigation = () => global.FCL.UI.Navigation;
     const Types = () => global.FCL.Types;
