@@ -119,6 +119,49 @@
     }
 
     // =====================================================================
+    // Create Split Transaction
+    // =====================================================================
+
+    /**
+     * Create a split transaction from Simple Mode.
+     * @param {Object} formData
+     * @param {string} formData.type - 'income'|'expense'
+     * @param {Array<{accountId: string, amount: number}>} formData.splitLines
+     * @param {string} formData.assetAccountId
+     * @param {string} formData.date
+     * @param {string} formData.notes
+     * @returns {Promise<{success: boolean, entry?: Object, errors?: string[]}>}
+     */
+    async function createSplitTransaction(formData) {
+        // Validate each split line amount
+        for (const line of formData.splitLines) {
+            const amtResult = Validators().validateAmount(line.amount);
+            if (!amtResult.valid) return { success: false, errors: [amtResult.error] };
+        }
+
+        let entry;
+        if (formData.type === Types().EntryType.EXPENSE) {
+            entry = Ledger().buildSplitExpense(
+                formData.splitLines, formData.assetAccountId,
+                formData.date, formData.notes
+            );
+        } else {
+            entry = Ledger().buildSplitIncome(
+                formData.splitLines, formData.assetAccountId,
+                formData.date, formData.notes
+            );
+        }
+
+        const validation = Ledger().validateJournalEntry(entry);
+        if (!validation.valid) return { success: false, errors: validation.errors };
+
+        await DB().saveJournalEntry(entry);
+        State().addEntry(entry);
+
+        return { success: true, entry };
+    }
+
+    // =====================================================================
     // Edit
     // =====================================================================
 
@@ -225,6 +268,7 @@
         createSimpleTransaction,
         createTransfer,
         createAdvancedTransaction,
+        createSplitTransaction,
         editTransaction,
         deleteTransaction,
         getSimpleDisplayInfo,
