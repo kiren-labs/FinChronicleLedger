@@ -7,7 +7,7 @@
     'use strict';
 
     const DB_NAME = 'FinChronicleLedgerDB';
-    const DB_VERSION = 3;
+    const DB_VERSION = 4;
 
     let _db = null;
 
@@ -74,6 +74,14 @@
                     if (!db.objectStoreNames.contains('budgets')) {
                         const budgetStore = db.createObjectStore('budgets', { keyPath: 'id' });
                         budgetStore.createIndex('month', 'month', { unique: true });
+                    }
+                }
+
+                // === v4: tags ===
+                if (oldVersion < 4) {
+                    if (!db.objectStoreNames.contains('tags')) {
+                        const tagStore = db.createObjectStore('tags', { keyPath: 'id' });
+                        tagStore.createIndex('name', 'name', { unique: true });
                     }
                 }
             };
@@ -382,6 +390,42 @@
     }
 
     // =====================================================================
+    // Tags CRUD
+    // =====================================================================
+
+    async function saveTag(tag) {
+        const tx = _tx('tags', 'readwrite');
+        tx.objectStore('tags').put(tag);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllTags() {
+        const tx = _tx('tags', 'readonly');
+        return _promisify(tx.objectStore('tags').getAll());
+    }
+
+    async function deleteTag(id) {
+        const tx = _tx('tags', 'readwrite');
+        tx.objectStore('tags').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    async function bulkSaveTags(tags) {
+        const tx = _tx('tags', 'readwrite');
+        const store = tx.objectStore('tags');
+        for (var i = 0; i < tags.length; i++) {
+            store.put(tags[i]);
+        }
+        return _promisifyTx(tx);
+    }
+
+    async function clearAllTags() {
+        const tx = _tx('tags', 'readwrite');
+        tx.objectStore('tags').clear();
+        return _promisifyTx(tx);
+    }
+
+    // =====================================================================
     // Export
     // =====================================================================
     global.FCL = global.FCL || {};
@@ -420,6 +464,12 @@
         getAllBudgets,
         getBudgetByMonth,
         deleteBudget,
+        // Tags
+        saveTag,
+        getAllTags,
+        deleteTag,
+        bulkSaveTags,
+        clearAllTags,
     };
 
 })(window);

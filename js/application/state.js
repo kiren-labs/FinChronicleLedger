@@ -15,6 +15,9 @@
     /** @type {Object} In-memory settings (key-value) */
     let _settings = {};
 
+    /** @type {Array} In-memory tags */
+    let _tags = [];
+
     /** @type {Set<Function>} UI listeners for re-render on data change */
     const _listeners = new Set();
 
@@ -43,6 +46,29 @@
     function removeAccount(id) {
         _accounts = _accounts.filter(a => a.id !== id);
         _notify();
+    }
+
+    // =====================================================================
+    // Tags
+    // =====================================================================
+
+    function getTags() { return _tags; }
+
+    function setTags(tags) {
+        _tags = tags;
+    }
+
+    function addTag(tag) {
+        _tags.push(tag);
+    }
+
+    function updateTag(updated) {
+        const idx = _tags.findIndex(t => t.id === updated.id);
+        if (idx !== -1) _tags[idx] = updated;
+    }
+
+    function removeTag(id) {
+        _tags = _tags.filter(t => t.id !== id);
     }
 
     // =====================================================================
@@ -103,6 +129,7 @@
     let _currentPage = 1;
     let _editingEntryId = null;
     let _searchQuery = '';
+    let _filterTagId = null;
 
     function getCurrentMonth() {
         return _currentMonth || new Date().toISOString().slice(0, 7);
@@ -124,6 +151,9 @@
         _currentPage = 1;
         _notify();
     }
+
+    function getFilterTagId() { return _filterTagId; }
+    function setFilterTagId(id) { _filterTagId = id; _currentPage = 1; _notify(); }
 
     // =====================================================================
     // Change Notification (Observer pattern)
@@ -147,6 +177,8 @@
     global.FCL.State = {
         // Accounts
         getAccounts, setAccounts, updateAccount, addAccount, removeAccount,
+        // Tags
+        getTags, setTags, addTag, updateTag, removeTag,
         // Entries
         getEntries, setEntries, addEntry, updateEntry, removeEntry, getEntryById,
         // Settings
@@ -157,6 +189,7 @@
         getCurrentPage, setCurrentPage,
         getEditingEntryId, setEditingEntryId,
         getSearchQuery, setSearchQuery,
+        getFilterTagId, setFilterTagId,
         // Observer
         subscribe,
     };
