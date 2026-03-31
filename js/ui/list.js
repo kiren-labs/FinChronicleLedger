@@ -11,6 +11,7 @@
     const TransactionService = () => global.FCL.TransactionService;
     const ReportService = () => global.FCL.ReportService;
     const SearchService = () => global.FCL.SearchService;
+    const TagService = () => global.FCL.TagService;
     const Ledger = () => global.FCL.Ledger;
     const R = () => global.FCL.UI.Renderer;
 
@@ -50,6 +51,8 @@
         const currentMonth = State().getCurrentMonth();
         const searchQuery = State().getSearchQuery();
         const searching = SearchService().isSearchActive();
+        const filterTagId = State().getFilterTagId();
+        const allTags = TagService() ? TagService().getAllTags() : [];
 
         let monthButtons = months.map(m => {
             const active = m === currentMonth ? 'filter-btn--active' : '';
@@ -58,6 +61,16 @@
 
         if (months.length === 0) {
             monthButtons = '<span class="text-muted">No transactions yet</span>';
+        }
+
+        let tagFilterHTML = '';
+        if (allTags.length > 0) {
+            tagFilterHTML = `<div class="tag-filter">
+                <select id="tagFilter" class="tag-filter-select" aria-label="Filter by tag">
+                    <option value="">All tags</option>
+                    ${allTags.map(t => `<option value="${R().escapeHTML(t.id)}"${t.id === filterTagId ? ' selected' : ''}>${R().escapeHTML(t.displayName)}</option>`).join('')}
+                </select>
+            </div>`;
         }
 
         container.innerHTML = `
@@ -71,6 +84,7 @@
             </div>
             <div class="filters">
                 <div class="filter-months${searching ? ' filter-disabled' : ''}">${monthButtons}</div>
+                ${tagFilterHTML}
             </div>
         `;
 
@@ -105,6 +119,15 @@
                     State().setCurrentMonth(btn.dataset.month);
                     State().setCurrentPage(1);
                 });
+            });
+        }
+
+        // Bind tag filter
+        const tagSelect = document.getElementById('tagFilter');
+        if (tagSelect) {
+            tagSelect.addEventListener('change', () => {
+                State().setFilterTagId(tagSelect.value || null);
+                State().setCurrentPage(1);
             });
         }
     }
@@ -142,6 +165,12 @@
                     return false;
                 });
             }
+        }
+
+        // Tag filter
+        const filterTagId = State().getFilterTagId();
+        if (filterTagId) {
+            entries = entries.filter(e => e.tags && e.tags.indexOf(filterTagId) !== -1);
         }
 
         // Apply search filter
@@ -205,6 +234,16 @@
     // List Items
     // =====================================================================
 
+    function _renderTagBadges(entry) {
+        if (!entry.tags || entry.tags.length === 0 || !TagService()) return '';
+        var badges = entry.tags.map(function (tagId) {
+            var tag = TagService().getTagById(tagId);
+            if (!tag) return '';
+            return '<span class="tag-badge" style="border-color:' + R().escapeHTML(tag.color) + ';color:' + R().escapeHTML(tag.color) + '">' + R().escapeHTML(tag.displayName) + '</span>';
+        }).filter(Boolean).join('');
+        return badges ? '<div class="tag-badges">' + badges + '</div>' : '';
+    }
+
     function _renderSimpleListItem(entry, accounts) {
         // Check if this is a split transaction
         if (Ledger().isSplitEntry(entry)) {
@@ -240,6 +279,7 @@
                     <span class="transaction-category">${categoryName}</span>
                     ${entry.description ? `<span class="transaction-notes">${R().escapeHTML(entry.description)}</span>` : ''}
                 </div>
+                ${_renderTagBadges(entry)}
                 <div class="transaction-actions">
                     <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
                     <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${R().escapeHTML(entry.id)}"><i class="ri-delete-bin-line"></i> Delete</button>
@@ -267,6 +307,7 @@
                 </div>
                 <div class="transaction-description">${R().escapeHTML(entry.description || '')}</div>
                 <div class="journal-lines-display">${linesHTML}</div>
+                ${_renderTagBadges(entry)}
                 <div class="transaction-actions">
                     <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
                     <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${R().escapeHTML(entry.id)}"><i class="ri-delete-bin-line"></i> Delete</button>
@@ -299,6 +340,7 @@
                     ${entry.description ? `<span class="transaction-notes">${R().escapeHTML(entry.description)}</span>` : ''}
                 </div>
                 <div class="split-breakdown">${splitDetails}</div>
+                ${_renderTagBadges(entry)}
                 <div class="transaction-actions">
                     <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
                     <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${R().escapeHTML(entry.id)}"><i class="ri-delete-bin-line"></i> Delete</button>

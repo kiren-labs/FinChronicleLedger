@@ -14,6 +14,8 @@
     const RecurringDomain = () => global.FCL.Recurring;
     const AccountService = () => global.FCL.AccountService;
     const BudgetService = () => global.FCL.BudgetService;
+    const TagService = () => global.FCL.TagService;
+    const CSVImportService = () => global.FCL.CSVImportService;
     const FileIO = () => global.FCL.FileIO;
     const R = () => global.FCL.UI.Renderer;
     const Modals = () => global.FCL.UI.Modals;
@@ -75,8 +77,22 @@
                     <button class="btn btn--secondary btn--full" id="restore-backup">
                         <i class="ri-upload-line"></i> Restore from Backup
                     </button>
+                    <button class="btn btn--secondary btn--full" id="import-csv-btn">
+                        <i class="ri-file-upload-line"></i> Import CSV
+                    </button>
                 </div>
                 <input type="file" id="restore-file-input" accept=".json" class="hidden">
+                <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+                <div id="csv-import-preview" class="hidden"></div>
+            </div>
+
+            <!-- Tags -->
+            <div class="settings-section">
+                <h3>Tags</h3>
+                ${_renderTagList()}
+                <button class="btn btn--secondary btn--full" id="add-tag-btn">
+                    <i class="ri-price-tag-3-line"></i> Create Tag
+                </button>
             </div>
 
             <!-- Backup Status -->
@@ -147,6 +163,8 @@
 
         _bindSettingsEvents();
         _bindAccountEvents();
+        _bindTagEvents();
+        _bindCSVImportEvents();
         _applyBarWidths(container);
     }
 
@@ -644,6 +662,209 @@
                 R().showToast(result.errors[0] || 'Error saving budget', 'error');
             }
         });
+    }
+
+    // =====================================================================
+    // Tag Management UI
+    // =====================================================================
+
+    function _renderTagList() {
+        var tags = TagService() ? TagService().getAllTags() : [];
+        if (tags.length === 0) {
+            return '<p class="text-muted">No tags created yet.</p>';
+        }
+
+        return '<div class="tag-list">' + tags.map(function (tag) {
+            var usage = TagService().getTagUsage(tag.id);
+            return '<div class="tag-row">'
+                + '<span class="tag-swatch" style="background:' + R().escapeHTML(tag.color) + '"></span>'
+                + '<span class="tag-row-name">' + R().escapeHTML(tag.displayName) + '</span>'
+                + '<span class="text-muted tag-row-usage">' + usage + ' txn' + (usage !== 1 ? 's' : '') + '</span>'
+                + '<span class="tag-row-actions">'
+                + '<button class="btn btn--ghost btn--small tag-edit-btn" data-tag-id="' + R().escapeHTML(tag.id) + '" title="Edit"><i class="ri-pencil-line"></i></button>'
+                + '<button class="btn btn--ghost btn--small btn--danger tag-delete-btn" data-tag-id="' + R().escapeHTML(tag.id) + '" title="Delete"><i class="ri-delete-bin-line"></i></button>'
+                + '</span>'
+                + '</div>';
+        }).join('') + '</div>';
+    }
+
+    function _bindTagEvents() {
+        var addBtn = document.getElementById('add-tag-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function () { _showTagForm(); });
+        }
+
+        document.querySelectorAll('.tag-edit-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { _showTagForm(btn.dataset.tagId); });
+        });
+
+        document.querySelectorAll('.tag-delete-btn').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                var tag = TagService().getTagById(btn.dataset.tagId);
+                if (!tag) return;
+                var usage = TagService().getTagUsage(tag.id);
+                var msg = 'Delete tag "' + tag.displayName + '"?';
+                if (usage > 0) msg += ' It will be removed from ' + usage + ' transaction' + (usage !== 1 ? 's' : '') + '.';
+                if (confirm(msg)) {
+                    await TagService().deleteTag(tag.id);
+                    R().showToast('Tag deleted', 'info');
+                    render();
+                }
+            });
+        });
+    }
+
+    function _showTagForm(editTagId) {
+        var mount = document.getElementById('modalMount');
+        if (!mount) return;
+
+        var TAG_COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316', '#6366F1', '#14B8A6'];
+        var existing = editTagId ? TagService().getTagById(editTagId) : null;
+        var selectedColor = existing ? existing.color : TAG_COLORS[0];
+
+        var colorPicker = TAG_COLORS.map(function (c) {
+            var sel = c === selectedColor ? ' tag-color--selected' : '';
+            return '<button type="button" class="tag-color-btn' + sel + '" data-color="' + c + '" style="background:' + c + '" aria-label="Color ' + c + '"></button>';
+        }).join('');
+
+        mount.innerHTML = '<div class="modal-overlay" id="tag-modal-overlay">'
+            + '<div class="modal">'
+            + '<h3>' + (existing ? 'Edit Tag' : 'Create Tag') + '</h3>'
+            + '<form id="tag-form">'
+            + '<div class="form-group">'
+            + '<label for="tag-name">Tag Name</label>'
+            + '<input type="text" id="tag-name" required minlength="2" maxlength="30" placeholder="e.g. groceries" value="' + (existing ? R().escapeHTML(existing.name) : '') + '">'
+            + '</div>'
+            + '<div class="form-group">'
+            + '<label>Color</label>'
+            + '<div class="tag-color-picker">' + colorPicker + '</div>'
+            + '<input type="hidden" id="tag-color-value" value="' + R().escapeHTML(selectedColor) + '">'
+            + '</div>'
+            + '<button type="submit" class="btn btn--primary btn--full">' + (existing ? 'Save Changes' : 'Create Tag') + '</button>'
+            + '<button type="button" class="btn btn--secondary btn--full" id="tag-form-cancel">Cancel</button>'
+            + '</form>'
+            + '</div>'
+            + '</div>';
+
+        // Color picker
+        mount.querySelectorAll('.tag-color-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                mount.querySelectorAll('.tag-color-btn').forEach(function (b) { b.classList.remove('tag-color--selected'); });
+                btn.classList.add('tag-color--selected');
+                document.getElementById('tag-color-value').value = btn.dataset.color;
+            });
+        });
+
+        document.getElementById('tag-form-cancel').addEventListener('click', function () { mount.innerHTML = ''; });
+        document.getElementById('tag-modal-overlay').addEventListener('click', function (e) {
+            if (e.target.id === 'tag-modal-overlay') mount.innerHTML = '';
+        });
+
+        document.getElementById('tag-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var name = document.getElementById('tag-name').value;
+            var color = document.getElementById('tag-color-value').value;
+            var result;
+            if (existing) {
+                result = await TagService().updateTag(existing.id, { name: name, color: color });
+            } else {
+                result = await TagService().createTag(name, color);
+            }
+            if (result.success) {
+                R().showToast(existing ? 'Tag updated' : 'Tag created!', 'success');
+                mount.innerHTML = '';
+                render();
+            } else {
+                R().showToast(result.errors[0] || 'Error', 'error');
+            }
+        });
+    }
+
+    // =====================================================================
+    // CSV Import UI
+    // =====================================================================
+
+    function _bindCSVImportEvents() {
+        var importBtn = document.getElementById('import-csv-btn');
+        var fileInput = document.getElementById('csv-file-input');
+        if (!importBtn || !fileInput) return;
+
+        importBtn.addEventListener('click', function () { fileInput.click(); });
+
+        fileInput.addEventListener('change', async function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                var text = await FileIO().readFile(file);
+                var parsed = CSVImportService().parseCSV(text);
+                var validated = CSVImportService().validateRows(parsed.rows);
+                _showCSVPreview(parsed, validated);
+            } catch (err) {
+                R().showToast('Error reading CSV: ' + err.message, 'error');
+            }
+            fileInput.value = '';
+        });
+    }
+
+    function _showCSVPreview(parsed, validated) {
+        var previewEl = document.getElementById('csv-import-preview');
+        if (!previewEl) return;
+
+        var errorHTML = '';
+        var allErrors = parsed.errors.concat(validated.invalid.map(function (inv) {
+            return { row: inv.row._rowNum, message: inv.reason };
+        }));
+
+        if (allErrors.length > 0) {
+            errorHTML = '<div class="csv-errors"><strong>Issues (' + allErrors.length + '):</strong><ul>'
+                + allErrors.slice(0, 10).map(function (err) {
+                    return '<li>Row ' + err.row + ': ' + R().escapeHTML(err.message) + '</li>';
+                }).join('')
+                + (allErrors.length > 10 ? '<li>...and ' + (allErrors.length - 10) + ' more</li>' : '')
+                + '</ul></div>';
+        }
+
+        var previewRows = validated.valid.slice(0, 5).map(function (row) {
+            return '<tr><td>' + R().escapeHTML(row.date) + '</td><td>' + R().escapeHTML(row.type) + '</td><td>' + R().escapeHTML(row.category) + '</td><td>' + R().formatCurrency(row.amount) + '</td></tr>';
+        }).join('');
+
+        previewEl.innerHTML = '<div class="csv-preview-panel">'
+            + '<h4>CSV Preview</h4>'
+            + '<p>' + validated.valid.length + ' valid row' + (validated.valid.length !== 1 ? 's' : '') + ' ready to import</p>'
+            + (previewRows ? '<table class="csv-preview-table"><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th></tr></thead><tbody>' + previewRows + '</tbody></table>' : '')
+            + (validated.valid.length > 5 ? '<p class="text-muted">...and ' + (validated.valid.length - 5) + ' more</p>' : '')
+            + errorHTML
+            + '<div class="csv-preview-actions">'
+            + '<button class="btn btn--primary" id="csv-confirm-import"' + (validated.valid.length === 0 ? ' disabled' : '') + '>Import ' + validated.valid.length + ' Rows</button>'
+            + '<button class="btn btn--secondary" id="csv-cancel-import">Cancel</button>'
+            + '</div>'
+            + '</div>';
+
+        previewEl.classList.remove('hidden');
+
+        document.getElementById('csv-cancel-import').addEventListener('click', function () {
+            previewEl.innerHTML = '';
+            previewEl.classList.add('hidden');
+        });
+
+        var confirmBtn = document.getElementById('csv-confirm-import');
+        if (confirmBtn && validated.valid.length > 0) {
+            confirmBtn.addEventListener('click', async function () {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Importing...';
+                var result = await CSVImportService().importRows(validated.valid);
+                previewEl.innerHTML = '';
+                previewEl.classList.add('hidden');
+                if (result.imported > 0) {
+                    R().showToast('Imported ' + result.imported + ' transaction' + (result.imported !== 1 ? 's' : '') + '!', 'success');
+                    R().updateUI();
+                }
+                if (result.errors.length > 0) {
+                    R().showToast(result.errors.length + ' row' + (result.errors.length !== 1 ? 's' : '') + ' failed to import', 'error');
+                }
+            });
+        }
     }
 
     // =====================================================================
