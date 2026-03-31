@@ -730,3 +730,22 @@
 [data-theme="dark"] .recurring-upcoming-widget {
     border-top-color: var(--color-border);
 }
+
+/* Budget */
+[data-theme="dark"] .budget-widget {
+    border-top-color: var(--color-border);
+}
+
+[data-theme="dark"] .budget-bar {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .budget-category-row {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .budget-form-row input {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}

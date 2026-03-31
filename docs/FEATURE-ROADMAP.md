@@ -12,7 +12,7 @@
 **Evidence-based priorities:**
 
 - ~~**Recurring Transactions** (P0, v1.2.0) — Gap #1: Missing in FinChronicleLedger~~ ✅
-- **Budget Planning** (P0, v1.2.0) — Gap #2: Missing in FinChronicleLedger
+- ~~**Budget Planning** (P0, v1.2.0) — Gap #2: Missing in FinChronicleLedger~~ ✅
 - **Search** (P0, v1.2.0) — Gap #3a: Full-text search (separated from Tags — different tools)
 - **Tags & Custom Categories** (P1, v1.2.0) — Gap #3b: Multi-dimensional tagging
 - **Split Transactions** (P0, v1.2.0) — UI-only; double-entry data model already supports it
@@ -58,7 +58,7 @@ All features maintain the app's core principles:
 | # | Feature | Priority | Complexity | Impact | Release | Notes |
 |---|---------|----------|------------|--------|---------|-------|
 | 1 | Recurring Transactions | P0 | Medium | High | v1.2.0 | ✅ Implemented — auto-create + reminder modes, backfill engine |
-| 2 | Budget Planning & Tracking | P0 | Medium | High | v1.2.0 | Gap #2 |
+| 2 | Budget Planning & Tracking | P0 | Medium | High | v1.2.0 | ✅ Implemented — per-category limits, progress bars, alerts |
 | 3 | Split Transactions | P0 | Low | High | v1.2.0 | ✅ Implemented — UI-only; no schema change |
 | 4 | Search (Full-Text) | P0 | Low | High | v1.2.0 | ✅ Implemented — Gap #3a; no new store |
 | 5 | Tags & Custom Categories | P1 | Low | Medium | v1.2.0 | Gap #3b |
@@ -1384,7 +1384,7 @@ View all accounts at once, consolidated balance sheet, inter-account transfers v
 
 ### v1.2.0 (Q2 2026)
 - ~~Recurring Transactions (P0) — auto-create + reminder modes, backfill engine~~ ✅ Implemented
-- Budget Planning & Tracking (P0)
+- ~~Budget Planning & Tracking (P0) — per-category limits, progress bars, alerts~~ ✅ Implemented
 - ~~Split Transactions (P0) — UI only, no schema change~~ ✅ Implemented
 - ~~Search / Full-Text (P0) — no new store~~ ✅ Implemented
 - Tags & Custom Categories (P1)

@@ -42,11 +42,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New application layer: `js/application/recurring-service.js` — CRUD, processUpcoming backfill, pending reminder management
 - IndexedDB upgraded to v2 with `recurring_templates` and `recurring_history` stores
 
+#### Budget Planning & Tracking (P0)
+- **Monthly budget creation** in Settings — set overall cap + per-category spending limits
+- Real-time **budget vs. actual** tracking with visual progress bars on the dashboard
+- **Budget alerts**: toast notifications when approaching (configurable threshold) or exceeding category budgets
+- Color-coded status: green (on-track), amber (approaching limit), red (over budget)
+- Daily allowance calculation based on remaining budget and days left in month
+- **Copy from previous month** — one-click budget duplication
+- Budget templates: 50/30/20, 60/20/10/10, Zero-Based
+- New domain layer: `js/domain/budget.js` — budget creation, validation, pure status calculation
+- New application layer: `js/application/budget-service.js` — CRUD, status queries, alert checks
+- IndexedDB upgraded to v3 with `budgets` store (unique month index)
+
 ### Changed
 
-- **Service Worker**: Added `search-service.js`, `recurring.js`, `recurring-service.js` to `CACHED_URLS` for offline availability
+- **Service Worker**: Added `search-service.js`, `recurring.js`, `recurring-service.js`, `budget.js`, `budget-service.js` to `CACHED_URLS` for offline availability
 - **Service Worker**: Bumped `CACHE_NAME` and `CDN_CACHE_NAME` to `v1.2.0`
-- **App startup**: Now loads recurring templates and processes missed recurring entries after first render
+- **App startup**: Now loads recurring templates, processes missed recurring entries, and loads budgets after first render
+- **Transaction form**: Shows budget alert toast after adding/editing expense transactions
 
 ### Fixed
 
