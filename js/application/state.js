@@ -35,6 +35,16 @@
         _notify();
     }
 
+    function addAccount(account) {
+        _accounts.push(account);
+        _notify();
+    }
+
+    function removeAccount(id) {
+        _accounts = _accounts.filter(a => a.id !== id);
+        _notify();
+    }
+
     // =====================================================================
     // Journal Entries
     // =====================================================================
@@ -136,7 +146,7 @@
     global.FCL = global.FCL || {};
     global.FCL.State = {
         // Accounts
-        getAccounts, setAccounts, updateAccount,
+        getAccounts, setAccounts, updateAccount, addAccount, removeAccount,
         // Entries
         getEntries, setEntries, addEntry, updateEntry, removeEntry, getEntryById,
         // Settings

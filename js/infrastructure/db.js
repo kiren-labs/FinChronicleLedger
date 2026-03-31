@@ -172,6 +172,17 @@
     }
 
     /**
+     * Delete an account by ID.
+     * @param {string} id
+     * @returns {Promise<void>}
+     */
+    async function deleteAccount(id) {
+        const tx = _tx('accounts', 'readwrite');
+        tx.objectStore('accounts').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    /**
      * Get account by ID.
      * @param {string} id
      * @returns {Promise<Object|undefined>}
@@ -382,6 +393,7 @@
         bulkSaveAccounts,
         getAllAccounts,
         updateAccount,
+        deleteAccount,
         getAccount,
         clearAllAccounts,
         // Journal Entries
