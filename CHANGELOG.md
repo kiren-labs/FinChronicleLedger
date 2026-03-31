@@ -7,6 +7,115 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] — 2026-03-31
+
+### Added
+
+#### Full-Text Search (P0)
+- **Search bar** on the List tab with debounced input (250ms) and clear button
+- Search across all months — month filter is automatically bypassed during active search
+- Matches transaction descriptions, line memos, account names, exact amounts, and entry types
+- Result count displayed (e.g., "3 results for 'dentist'")
+- Cursor position preserved across re-renders for seamless typing
+- New `SearchService` in Application layer (`js/application/search-service.js`)
+- Transient `_searchQuery` state in `State` — session-scoped, not persisted
+- No new IndexedDB store — pure in-memory filtering over existing entries
+
+#### Split Transactions (P0)
+- **"Split this transaction"** button in Simple Mode form for expenses and income
+- Dynamic split lines UI — add/remove category+amount rows (minimum 2)
+- Real-time running total display as amounts are entered
+- `[Split]` badge on split entries in the transaction list with per-category breakdown
+- New domain helpers: `isSplitEntry()`, `getSplitBreakdown()`, `buildSplitExpense()`, `buildSplitIncome()` in Ledger
+- New `createSplitTransaction()` in TransactionService
+- No schema change — uses existing multi-line double-entry journal entries natively
+
+#### Recurring Transactions (P0)
+- **Recurring template management** in Settings — create, pause/resume, and delete templates
+- Supports expense, income, and transfer types with configurable frequency (daily/weekly/monthly/quarterly/yearly)
+- **Auto-create mode**: Automatically creates transactions on missed due dates when the app is opened
+- **Reminder mode**: Queues pending reminders for manual confirmation/skip
+- **Upcoming widget** on the dashboard summary showing next 7 days of recurring transactions
+- Pending reminders shown with Confirm/Skip action buttons on the summary
+- Backfill engine handles "opened app after vacation" scenario — catches up all missed due dates
+- New domain layer: `js/domain/recurring.js` — frequency types, date advancement, missed/upcoming date calculation, template validation
+- New application layer: `js/application/recurring-service.js` — CRUD, processUpcoming backfill, pending reminder management
+- IndexedDB upgraded to v2 with `recurring_templates` and `recurring_history` stores
+
+#### Budget Planning & Tracking (P0)
+- **Monthly budget creation** in Settings — set overall cap + per-category spending limits
+- Real-time **budget vs. actual** tracking with visual progress bars on the dashboard
+- **Budget alerts**: toast notifications when approaching (configurable threshold) or exceeding category budgets
+- Color-coded status: green (on-track), amber (approaching limit), red (over budget)
+- Daily allowance calculation based on remaining budget and days left in month
+- **Copy from previous month** — one-click budget duplication
+- Budget templates: 50/30/20, 60/20/10/10, Zero-Based
+- New domain layer: `js/domain/budget.js` — budget creation, validation, pure status calculation
+- New application layer: `js/application/budget-service.js` — CRUD, status queries, alert checks
+- IndexedDB upgraded to v3 with `budgets` store (unique month index)
+
+#### Undo / Delete Recovery (P1)
+- **8-second undo window** after deleting a transaction — toast shows [Undo] button
+- Optimistic UI: entry removed from list immediately, IndexedDB delete deferred
+- If app is closed during the window, the entry survives in IndexedDB (fail-safe)
+- Toast supports action buttons (`showToast(message, type, {label, action})`)
+- Delete confirmation modal updated with "8 seconds to undo" guidance
+
+#### Account Management UI (P1)
+- **Accounts section** in Settings (Advanced Mode) — grouped by type with collapsible `<details>` sections
+- Per-account actions: **Edit** (rename), **Deactivate** / **Reactivate**, **Delete**
+- System accounts are read-only (cannot rename, deactivate, or delete)
+- **Add Custom Account** — modal form with name, type, and auto-suggested account code
+- Account codes auto-assigned within standard ranges (Assets 1000–1999, Liabilities 2000–2999, etc.)
+- Delete only allowed for accounts with zero transactions; accounts with history must be deactivated instead
+- New service methods: `addAccount()`, `deleteAccount()`, `getNextAccountCode()`
+- New infrastructure: `DB.deleteAccount()`, `State.addAccount()`, `State.removeAccount()`
+
+#### Tags & Custom Categories (P1)
+- **Tag management** in Settings — create, rename, recolor, and delete tags
+- **10-color palette** picker for tag color selection
+- **Tag picker** in transaction forms — toggle tags on/off as chips before saving
+- **Tag badges** displayed on transactions in the list view (simple, advanced, and split items)
+- **Tag filter** dropdown in the list filter bar — filter transactions by tag across all views
+- Tags persist on transactions across edit/delete cycles
+- Tag deletion cascades — removes tag reference from all tagged transactions
+- Tag usage count shown in Settings management list
+- IndexedDB upgraded to v4 with `tags` store (unique name index)
+- New service: `js/application/tag-service.js` — full CRUD, tag-entry association, usage counts, tag reports
+
+#### CSV Import (P1)
+- **Import CSV** button in Settings Data section triggers file picker
+- CSV parser handles quoted fields, escaped quotes, and flexible headers
+- Required headers: `date`, `amount`, `type`, `category`; optional: `notes`/`description`
+- **Preview panel** shows valid row count, sample data table, and error list before importing
+- Validates categories against Chart of Accounts (by name or CategoryAccountMap)
+- Imports as standard double-entry transactions via TransactionService
+- New service: `js/application/csv-import-service.js` — parse, validate, import pipeline
+
+#### Merge Restore (P1)
+- **Restore strategy selection** — choose between "Replace All" (destructive) and "Merge" (non-destructive)
+- **Merge preview** modal shows count of new entries, duplicate entries to skip, new accounts, and new tags
+- Merge imports only non-duplicate entries (matched by ID), preserving all existing data
+- New accounts, entries, and tags from backup are sanitized before merge
+- Full backup now includes tags in the JSON export
+- New methods: `previewMerge()`, `mergeFromBackup()` in ImportExportService
+
+### Changed
+
+- **Service Worker**: Added `search-service.js`, `recurring.js`, `recurring-service.js`, `budget.js`, `budget-service.js`, `tag-service.js`, `csv-import-service.js` to `CACHED_URLS` for offline availability
+- **Service Worker**: Bumped `CACHE_NAME` and `CDN_CACHE_NAME` to `v1.2.0`
+- **App startup**: Now loads recurring templates, processes missed recurring entries, loads budgets, and loads tags after first render
+- **Transaction form**: Shows budget alert toast after adding/editing expense transactions
+- **Full backup JSON**: Now includes `tags` array alongside accounts, entries, and settings
+- **Restore from backup**: Now restores tags and supports merge strategy selection (replace-all vs merge)
+
+### Fixed
+
+- **CSP inline style violations**: Replaced all inline `style=""` attributes with CSS classes (`.hidden`, `.filter-disabled`) and programmatic `element.style.width` for dynamic budget bar widths — resolves `style-src 'self'` Content Security Policy errors
+- **Roadmap**: Updated Feature Overview Matrix and Implementation Priority to track completed features
+
+---
+
 ## [1.1.0] — 2026-03-01
 
 ### Security

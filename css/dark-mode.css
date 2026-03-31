@@ -677,3 +677,122 @@
     background: var(--color-surface);
     color: var(--color-text-muted);
 }
+
+/* Search */
+[data-theme="dark"] .search-input {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .search-clear-btn {
+    background: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .search-clear-btn:hover {
+    background: var(--color-text-muted);
+    color: var(--color-surface);
+}
+
+/* Split Transactions */
+[data-theme="dark"] .split-container {
+    background: var(--color-bg);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .split-line select,
+[data-theme="dark"] .split-line input {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .split-badge {
+    background: rgba(0, 81, 213, 0.2);
+    color: var(--color-primary-strong);
+}
+
+/* Recurring Transactions */
+[data-theme="dark"] .recurring-item {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .recurring-pending-item {
+    background: rgba(255, 193, 7, 0.08);
+}
+
+[data-theme="dark"] .recurring-status-badge {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .recurring-upcoming-widget {
+    border-top-color: var(--color-border);
+}
+
+/* Budget */
+[data-theme="dark"] .budget-widget {
+    border-top-color: var(--color-border);
+}
+
+[data-theme="dark"] .budget-bar {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .budget-category-row {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .budget-form-row input {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+/* Account Management */
+[data-theme="dark"] .account-row:hover {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .account-badge--system {
+    background: rgba(0, 122, 255, 0.15);
+}
+
+[data-theme="dark"] .account-badge--inactive {
+    background: rgba(230, 81, 0, 0.15);
+}
+
+/* Tags */
+[data-theme="dark"] .tag-row:hover {
+    background: var(--color-surface);
+}
+
+[data-theme="dark"] .tag-color--selected {
+    border-color: var(--color-text);
+}
+
+[data-theme="dark"] .tag-filter-select {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+/* CSV Import */
+[data-theme="dark"] .csv-preview-panel {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .csv-preview-table th {
+    background: var(--color-bg);
+}
+
+[data-theme="dark"] .csv-errors {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Merge Restore */
+[data-theme="dark"] .merge-preview-stats {
+    background: var(--color-surface);
+}

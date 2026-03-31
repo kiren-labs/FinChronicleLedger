@@ -12,6 +12,10 @@
     const Types = () => global.FCL.Types;
     const Validators = () => global.FCL.Validators;
     const State = () => global.FCL.State;
+    const R = () => global.FCL.UI.Renderer;
+
+    // Undo buffer — holds pending deletes during the undo window
+    var _pendingDelete = null;
 
     // =====================================================================
     // Create
@@ -119,6 +123,49 @@
     }
 
     // =====================================================================
+    // Create Split Transaction
+    // =====================================================================
+
+    /**
+     * Create a split transaction from Simple Mode.
+     * @param {Object} formData
+     * @param {string} formData.type - 'income'|'expense'
+     * @param {Array<{accountId: string, amount: number}>} formData.splitLines
+     * @param {string} formData.assetAccountId
+     * @param {string} formData.date
+     * @param {string} formData.notes
+     * @returns {Promise<{success: boolean, entry?: Object, errors?: string[]}>}
+     */
+    async function createSplitTransaction(formData) {
+        // Validate each split line amount
+        for (const line of formData.splitLines) {
+            const amtResult = Validators().validateAmount(line.amount);
+            if (!amtResult.valid) return { success: false, errors: [amtResult.error] };
+        }
+
+        let entry;
+        if (formData.type === Types().EntryType.EXPENSE) {
+            entry = Ledger().buildSplitExpense(
+                formData.splitLines, formData.assetAccountId,
+                formData.date, formData.notes
+            );
+        } else {
+            entry = Ledger().buildSplitIncome(
+                formData.splitLines, formData.assetAccountId,
+                formData.date, formData.notes
+            );
+        }
+
+        const validation = Ledger().validateJournalEntry(entry);
+        if (!validation.valid) return { success: false, errors: validation.errors };
+
+        await DB().saveJournalEntry(entry);
+        State().addEntry(entry);
+
+        return { success: true, entry };
+    }
+
+    // =====================================================================
     // Edit
     // =====================================================================
 
@@ -175,11 +222,15 @@
     }
 
     // =====================================================================
-    // Delete
+    // Delete (with Undo support)
     // =====================================================================
 
     /**
-     * Delete a transaction by ID.
+     * Delete a transaction by ID with an 8-second undo window.
+     * Entry is removed from UI immediately (optimistic) but IndexedDB
+     * delete is deferred. If the user clicks Undo, the entry is restored.
+     * If the app is closed during the window, the entry survives in
+     * IndexedDB and reappears on next load — correct safety behavior.
      * @param {string} id
      * @returns {Promise<{success: boolean, errors?: string[]}>}
      */
@@ -187,10 +238,63 @@
         const existing = State().getEntryById(id);
         if (!existing) return { success: false, errors: ['Transaction not found'] };
 
-        await DB().deleteJournalEntry(id);
+        // If there's already a pending delete, commit it immediately
+        _commitPendingDelete();
+
+        // Remove from in-memory state (optimistic UI update)
         State().removeEntry(id);
 
+        // Store in undo buffer
+        _pendingDelete = {
+            entry: existing,
+            timer: setTimeout(function () {
+                _commitPendingDelete();
+            }, 8000),
+        };
+
+        // Show undo toast
+        if (R()) {
+            R().showToast('Transaction deleted', 'info', {
+                label: 'Undo',
+                action: function () {
+                    _undoPendingDelete();
+                },
+            });
+
+            // Refresh UI to reflect removal
+            R().updateUI();
+        }
+
         return { success: true };
+    }
+
+    /**
+     * Commit the pending delete to IndexedDB.
+     */
+    function _commitPendingDelete() {
+        if (!_pendingDelete) return;
+        clearTimeout(_pendingDelete.timer);
+        var entry = _pendingDelete.entry;
+        _pendingDelete = null;
+        DB().deleteJournalEntry(entry.id);
+    }
+
+    /**
+     * Undo the pending delete — restore entry to in-memory state.
+     */
+    function _undoPendingDelete() {
+        if (!_pendingDelete) return;
+        clearTimeout(_pendingDelete.timer);
+        var entry = _pendingDelete.entry;
+        _pendingDelete = null;
+
+        // Restore to in-memory state (entry is still in IndexedDB)
+        State().addEntry(entry);
+
+        if (R()) {
+            R().showToast('Transaction restored', 'success');
+            R().updateUI();
+        }
     }
 
     // =====================================================================
@@ -225,6 +329,7 @@
         createSimpleTransaction,
         createTransfer,
         createAdvancedTransaction,
+        createSplitTransaction,
         editTransaction,
         deleteTransaction,
         getSimpleDisplayInfo,

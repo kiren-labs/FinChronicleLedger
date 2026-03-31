@@ -1,8 +1,8 @@
 # FinChronicleLedger — Feature Roadmap
 
 **Perspective:** Accountant & Personal Finance Manager
-**Date:** 2026-03-03 (Updated 2026-03-31 — gap analysis + architecture review)
-**Version:** 1.1.0 → Future Releases
+**Date:** 2026-03-03 (Updated 2026-03-31 — gap analysis + architecture review + implementation tracking)
+**Version:** 1.2.0 → Future Releases
 
 ---
 
@@ -11,8 +11,8 @@
 **Date:** 2026-03-31
 **Evidence-based priorities:**
 
-- **Recurring Transactions** (P0, v1.2.0) — Gap #1: Missing in FinChronicleLedger
-- **Budget Planning** (P0, v1.2.0) — Gap #2: Missing in FinChronicleLedger
+- ~~**Recurring Transactions** (P0, v1.2.0) — Gap #1: Missing in FinChronicleLedger~~ ✅
+- ~~**Budget Planning** (P0, v1.2.0) — Gap #2: Missing in FinChronicleLedger~~ ✅
 - **Search** (P0, v1.2.0) — Gap #3a: Full-text search (separated from Tags — different tools)
 - **Tags & Custom Categories** (P1, v1.2.0) — Gap #3b: Multi-dimensional tagging
 - **Split Transactions** (P0, v1.2.0) — UI-only; double-entry data model already supports it
@@ -57,16 +57,16 @@ All features maintain the app's core principles:
 
 | # | Feature | Priority | Complexity | Impact | Release | Notes |
 |---|---------|----------|------------|--------|---------|-------|
-| 1 | Recurring Transactions | P0 | Medium | High | v1.2.0 | Gap #1; check on startup only |
-| 2 | Budget Planning & Tracking | P0 | Medium | High | v1.2.0 | Gap #2 |
-| 3 | Split Transactions | P0 | Low | High | v1.2.0 | UI-only; no schema change |
-| 4 | Search (Full-Text) | P0 | Low | High | v1.2.0 | Gap #3a; no new store |
-| 5 | Tags & Custom Categories | P1 | Low | Medium | v1.2.0 | Gap #3b |
-| 6 | Undo / Delete Recovery | P1 | Low | High | v1.2.0 | No schema change |
-| 7 | Account Management UI | P1 | Low | Medium | v1.2.0 | Prerequisite for customization |
-| 4-A | CSV Import (Simple Transactions) | P1 | Low | Medium | v1.2.0 | Gap #5 |
-| 4-B | Merge Restore (Non-destructive) | P1 | Medium | Medium | v1.2.0 | Gap #6 |
-| 4-C | Backup Status & Reminders UX | P1 | Low | Medium | v1.2.0 | Gap #7 |
+| 1 | Recurring Transactions | P0 | Medium | High | v1.2.0 | ✅ Implemented — auto-create + reminder modes, backfill engine |
+| 2 | Budget Planning & Tracking | P0 | Medium | High | v1.2.0 | ✅ Implemented — per-category limits, progress bars, alerts |
+| 3 | Split Transactions | P0 | Low | High | v1.2.0 | ✅ Implemented — UI-only; no schema change |
+| 4 | Search (Full-Text) | P0 | Low | High | v1.2.0 | ✅ Implemented — Gap #3a; no new store |
+| 5 | Tags & Custom Categories | P1 | Low | Medium | v1.2.0 | ✅ Implemented — tag CRUD, color picker, form tag chips, list badges, tag filter |
+| 6 | Undo / Delete Recovery | P1 | Low | High | v1.2.0 | ✅ Implemented — 8-second undo window, optimistic UI |
+| 7 | Account Management UI | P1 | Low | Medium | v1.2.0 | ✅ Implemented — CRUD, deactivate, Advanced Mode |
+| 4-A | CSV Import (Simple Transactions) | P1 | Low | Medium | v1.2.0 | ✅ Implemented — CSV parse, preview, validate, import pipeline |
+| 4-B | Merge Restore (Non-destructive) | P1 | Medium | Medium | v1.2.0 | ✅ Implemented — merge/replace strategy, preview, ID-based dedup |
+| 4-C | Backup Status & Reminders UX | P1 | Low | Medium | v1.2.0 | ✅ Implemented — Gap #7 |
 | 8 | Payee Management | P1 | Low | Medium | v1.3.0 | Prerequisite for Reconciliation |
 | 9 | Transaction Reconciliation | P1 | High | High | v1.3.0 | Requires Payee Management (#8) |
 | 10 | Financial Goals Tracking | P1 | Medium | High | v1.3.0 | |
@@ -1383,16 +1383,16 @@ View all accounts at once, consolidated balance sheet, inter-account transfers v
 ## Implementation Priority
 
 ### v1.2.0 (Q2 2026)
-- Recurring Transactions (P0)
-- Budget Planning & Tracking (P0)
-- Split Transactions (P0) — UI only, no schema change
-- Search / Full-Text (P0) — no new store
+- ~~Recurring Transactions (P0) — auto-create + reminder modes, backfill engine~~ ✅ Implemented
+- ~~Budget Planning & Tracking (P0) — per-category limits, progress bars, alerts~~ ✅ Implemented
+- ~~Split Transactions (P0) — UI only, no schema change~~ ✅ Implemented
+- ~~Search / Full-Text (P0) — no new store~~ ✅ Implemented
 - Tags & Custom Categories (P1)
 - Undo / Delete Recovery (P1)
 - Account Management UI (P1)
 - CSV Import (P1)
 - Merge Restore (P1)
-- Backup Status & Reminders UX (P1)
+- ~~Backup Status & Reminders UX (P1)~~ ✅ Implemented
 
 ### v1.3.0 (Q3 2026)
 - Payee Management (P1) — ships with or before Reconciliation

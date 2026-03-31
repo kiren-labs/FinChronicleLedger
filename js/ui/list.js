@@ -10,6 +10,9 @@
     const AccountService = () => global.FCL.AccountService;
     const TransactionService = () => global.FCL.TransactionService;
     const ReportService = () => global.FCL.ReportService;
+    const SearchService = () => global.FCL.SearchService;
+    const TagService = () => global.FCL.TagService;
+    const Ledger = () => global.FCL.Ledger;
     const R = () => global.FCL.UI.Renderer;
 
     const ITEMS_PER_PAGE = 20;
@@ -19,8 +22,21 @@
     // =====================================================================
 
     function render(mode) {
+        // Preserve search input focus across re-renders
+        const hadSearchFocus = document.activeElement && document.activeElement.id === 'searchInput';
+        const cursorPos = hadSearchFocus ? document.activeElement.selectionStart : 0;
+
         renderFilters();
         renderTransactionList(mode);
+
+        // Restore focus to search input if it was focused before
+        if (hadSearchFocus) {
+            const input = document.getElementById('searchInput');
+            if (input) {
+                input.focus();
+                input.setSelectionRange(cursorPos, cursorPos);
+            }
+        }
     }
 
     // =====================================================================
@@ -33,6 +49,10 @@
 
         const months = ReportService().getAvailableMonths();
         const currentMonth = State().getCurrentMonth();
+        const searchQuery = State().getSearchQuery();
+        const searching = SearchService().isSearchActive();
+        const filterTagId = State().getFilterTagId();
+        const allTags = TagService() ? TagService().getAllTags() : [];
 
         let monthButtons = months.map(m => {
             const active = m === currentMonth ? 'filter-btn--active' : '';
@@ -43,19 +63,73 @@
             monthButtons = '<span class="text-muted">No transactions yet</span>';
         }
 
+        let tagFilterHTML = '';
+        if (allTags.length > 0) {
+            tagFilterHTML = `<div class="tag-filter">
+                <select id="tagFilter" class="tag-filter-select" aria-label="Filter by tag">
+                    <option value="">All tags</option>
+                    ${allTags.map(t => `<option value="${R().escapeHTML(t.id)}"${t.id === filterTagId ? ' selected' : ''}>${R().escapeHTML(t.displayName)}</option>`).join('')}
+                </select>
+            </div>`;
+        }
+
         container.innerHTML = `
+            <div class="search-bar">
+                <div class="search-input-wrapper">
+                    <i class="ri-search-line search-icon"></i>
+                    <input type="search" id="searchInput" class="search-input" placeholder="Search transactions..." value="${R().escapeHTML(searchQuery)}" autocomplete="off" aria-label="Search transactions">
+                    ${searching ? '<button class="search-clear-btn" id="searchClear" aria-label="Clear search"><i class="ri-close-line"></i></button>' : ''}
+                </div>
+                ${searching ? '<div class="search-status">Searching across all months</div>' : ''}
+            </div>
             <div class="filters">
-                <div class="filter-months">${monthButtons}</div>
+                <div class="filter-months${searching ? ' filter-disabled' : ''}">${monthButtons}</div>
+                ${tagFilterHTML}
             </div>
         `;
 
-        // Bind month filter clicks
-        container.querySelectorAll('.filter-btn[data-month]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                State().setCurrentMonth(btn.dataset.month);
+        // Bind search input
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            let debounceTimer;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    State().setSearchQuery(searchInput.value);
+                }, 250);
+            });
+            // Preserve focus after re-render
+            if (document.activeElement && document.activeElement.id === 'searchInput') {
+                searchInput.focus();
+            }
+        }
+
+        // Bind clear button
+        const clearBtn = document.getElementById('searchClear');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                State().setSearchQuery('');
+            });
+        }
+
+        // Bind month filter clicks (disabled when searching)
+        if (!searching) {
+            container.querySelectorAll('.filter-btn[data-month]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    State().setCurrentMonth(btn.dataset.month);
+                    State().setCurrentPage(1);
+                });
+            });
+        }
+
+        // Bind tag filter
+        const tagSelect = document.getElementById('tagFilter');
+        if (tagSelect) {
+            tagSelect.addEventListener('change', () => {
+                State().setFilterTagId(tagSelect.value || null);
                 State().setCurrentPage(1);
             });
-        });
+        }
     }
 
     // =====================================================================
@@ -68,20 +142,40 @@
 
         const month = State().getCurrentMonth();
         const page = State().getCurrentPage();
-        let entries = State().getEntries()
-            .filter(e => e.date.startsWith(month))
-            .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+        const searchQuery = State().getSearchQuery();
+        const searching = SearchService().isSearchActive();
 
-        // Category filter
-        const catFilter = State().getCurrentCategory();
-        if (catFilter) {
-            entries = entries.filter(e => {
-                for (const line of e.lines) {
-                    const acc = AccountService().getAccountById(line.accountId);
-                    if (acc && acc.name === catFilter) return true;
-                }
-                return false;
-            });
+        // When searching, search across ALL entries (all months)
+        // When not searching, filter by current month
+        let entries = State().getEntries();
+        if (!searching) {
+            entries = entries.filter(e => e.date.startsWith(month));
+        }
+        entries = entries.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+
+        // Category filter (only when not searching)
+        if (!searching) {
+            const catFilter = State().getCurrentCategory();
+            if (catFilter) {
+                entries = entries.filter(e => {
+                    for (const line of e.lines) {
+                        const acc = AccountService().getAccountById(line.accountId);
+                        if (acc && acc.name === catFilter) return true;
+                    }
+                    return false;
+                });
+            }
+        }
+
+        // Tag filter
+        const filterTagId = State().getFilterTagId();
+        if (filterTagId) {
+            entries = entries.filter(e => e.tags && e.tags.indexOf(filterTagId) !== -1);
+        }
+
+        // Apply search filter
+        if (searching) {
+            entries = SearchService().search(searchQuery, entries);
         }
 
         // Pagination
@@ -90,7 +184,11 @@
         const pageEntries = entries.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
         if (pageEntries.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No transactions this month.</p></div>';
+            if (searching) {
+                container.innerHTML = '<div class="empty-state"><p>No transactions match "<strong>' + R().escapeHTML(searchQuery) + '</strong>"</p></div>';
+            } else {
+                container.innerHTML = '<div class="empty-state"><p>No transactions this month.</p></div>';
+            }
             return;
         }
 
@@ -117,7 +215,14 @@
             `;
         }
 
+        // Search result count
+        let searchResultHTML = '';
+        if (searching) {
+            searchResultHTML = `<div class="search-result-count">${entries.length} result${entries.length !== 1 ? 's' : ''} for "${R().escapeHTML(searchQuery)}"</div>`;
+        }
+
         container.innerHTML = `
+            ${searchResultHTML}
             <div class="transaction-list">${html}</div>
             ${paginationHTML}
         `;
@@ -129,7 +234,22 @@
     // List Items
     // =====================================================================
 
+    function _renderTagBadges(entry) {
+        if (!entry.tags || entry.tags.length === 0 || !TagService()) return '';
+        var badges = entry.tags.map(function (tagId) {
+            var tag = TagService().getTagById(tagId);
+            if (!tag) return '';
+            return '<span class="tag-badge" style="border-color:' + R().escapeHTML(tag.color) + ';color:' + R().escapeHTML(tag.color) + '">' + R().escapeHTML(tag.displayName) + '</span>';
+        }).filter(Boolean).join('');
+        return badges ? '<div class="tag-badges">' + badges + '</div>' : '';
+    }
+
     function _renderSimpleListItem(entry, accounts) {
+        // Check if this is a split transaction
+        if (Ledger().isSplitEntry(entry)) {
+            return _renderSplitListItem(entry, accounts);
+        }
+
         const info = TransactionService().getSimpleDisplayInfo(entry);
         let categoryName = '';
         let amountClass = '';
@@ -159,6 +279,7 @@
                     <span class="transaction-category">${categoryName}</span>
                     ${entry.description ? `<span class="transaction-notes">${R().escapeHTML(entry.description)}</span>` : ''}
                 </div>
+                ${_renderTagBadges(entry)}
                 <div class="transaction-actions">
                     <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
                     <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${R().escapeHTML(entry.id)}"><i class="ri-delete-bin-line"></i> Delete</button>
@@ -186,6 +307,40 @@
                 </div>
                 <div class="transaction-description">${R().escapeHTML(entry.description || '')}</div>
                 <div class="journal-lines-display">${linesHTML}</div>
+                ${_renderTagBadges(entry)}
+                <div class="transaction-actions">
+                    <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
+                    <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${R().escapeHTML(entry.id)}"><i class="ri-delete-bin-line"></i> Delete</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function _renderSplitListItem(entry, accounts) {
+        const breakdown = Ledger().getSplitBreakdown(entry);
+        if (!breakdown) return '';
+
+        const amountClass = entry.type === 'income' ? 'amount--income' : 'amount--expense';
+        const prefix = entry.type === 'income' ? '+' : '-';
+
+        const splitDetails = breakdown.lines.map(l => {
+            const acc = accounts.get(l.accountId);
+            const name = acc ? R().escapeHTML(acc.name) : 'Unknown';
+            return `<span class="split-detail">${name} ${R().formatCurrency(l.amount)}</span>`;
+        }).join(' · ');
+
+        return `
+            <div class="transaction-item" data-id="${R().escapeHTML(entry.id)}">
+                <div class="transaction-header">
+                    <span class="transaction-date">${R().formatDate(entry.date)}</span>
+                    <span class="transaction-amount ${amountClass}">${prefix}${R().formatCurrency(breakdown.total)}</span>
+                </div>
+                <div class="transaction-body">
+                    <span class="transaction-badge split-badge">Split</span>
+                    ${entry.description ? `<span class="transaction-notes">${R().escapeHTML(entry.description)}</span>` : ''}
+                </div>
+                <div class="split-breakdown">${splitDetails}</div>
+                ${_renderTagBadges(entry)}
                 <div class="transaction-actions">
                     <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
                     <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${R().escapeHTML(entry.id)}"><i class="ri-delete-bin-line"></i> Delete</button>
@@ -215,11 +370,8 @@
                 if (global.FCL.UI.Modals) {
                     global.FCL.UI.Modals.showDeleteConfirm(btn.dataset.id);
                 } else {
-                    // Fallback
-                    if (confirm('Delete this transaction?')) {
-                        await TransactionService().deleteTransaction(btn.dataset.id);
-                        R().showToast('Transaction deleted', 'success');
-                    }
+                    // Fallback — direct delete with undo support
+                    await TransactionService().deleteTransaction(btn.dataset.id);
                 }
             });
         });

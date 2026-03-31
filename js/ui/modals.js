@@ -6,6 +6,7 @@
     'use strict';
 
     const TransactionService = () => global.FCL.TransactionService;
+    const ImportExport = () => global.FCL.ImportExportService;
     const R = () => global.FCL.UI.Renderer;
 
     // =====================================================================
@@ -56,7 +57,8 @@
     function showDeleteConfirm(entryId) {
         showModal(`
             <h3>Delete Transaction</h3>
-            <p>Are you sure you want to delete this transaction? This cannot be undone.</p>
+            <p>Are you sure you want to delete this transaction?</p>
+            <p class="text-muted">You'll have 8 seconds to undo after deletion.</p>
             <div class="modal-actions">
                 <button class="btn btn--secondary" id="modal-cancel">Cancel</button>
                 <button class="btn btn--danger" id="modal-confirm-delete">Delete</button>
@@ -65,13 +67,8 @@
 
         document.getElementById('modal-cancel').addEventListener('click', closeModal);
         document.getElementById('modal-confirm-delete').addEventListener('click', async () => {
-            const result = await TransactionService().deleteTransaction(entryId);
             closeModal();
-            if (result.success) {
-                R().showToast('Transaction deleted', 'success');
-            } else {
-                R().showToast(result.errors[0] || 'Delete failed', 'error');
-            }
+            await TransactionService().deleteTransaction(entryId);
         });
     }
 
@@ -82,19 +79,62 @@
     function showRestoreConfirm(onConfirm) {
         showModal(`
             <h3>Restore Backup</h3>
-            <p>This will <strong>replace all current data</strong> with the backup. A backup of current data will be created first.</p>
-            <p>Are you sure?</p>
+            <p>Choose a restore strategy:</p>
+            <div class="restore-strategies">
+                <button class="btn btn--secondary btn--full restore-strategy-btn" id="restore-replace">
+                    <strong>Replace All</strong>
+                    <span class="text-muted">Delete all current data and replace with backup</span>
+                </button>
+                <button class="btn btn--secondary btn--full restore-strategy-btn" id="restore-merge">
+                    <strong>Merge</strong>
+                    <span class="text-muted">Keep existing data and add only new entries from backup</span>
+                </button>
+            </div>
             <div class="modal-actions">
                 <button class="btn btn--secondary" id="modal-cancel">Cancel</button>
-                <button class="btn btn--primary" id="modal-confirm-restore">Restore</button>
             </div>
         `);
 
         document.getElementById('modal-cancel').addEventListener('click', closeModal);
-        document.getElementById('modal-confirm-restore').addEventListener('click', () => {
+        document.getElementById('restore-replace').addEventListener('click', () => {
             closeModal();
-            if (onConfirm) onConfirm();
+            if (onConfirm) onConfirm('replace');
         });
+        document.getElementById('restore-merge').addEventListener('click', () => {
+            closeModal();
+            if (onConfirm) onConfirm('merge');
+        });
+    }
+
+    /**
+     * Show merge preview with stats before applying.
+     */
+    function showMergePreview(preview, onConfirm) {
+        showModal(`
+            <h3>Merge Preview</h3>
+            <div class="merge-preview-stats">
+                <p><strong>${preview.newEntries}</strong> new transaction${preview.newEntries !== 1 ? 's' : ''} will be added</p>
+                <p><strong>${preview.duplicateEntries}</strong> duplicate${preview.duplicateEntries !== 1 ? 's' : ''} will be skipped</p>
+                ${preview.newAccounts > 0 ? `<p><strong>${preview.newAccounts}</strong> new account${preview.newAccounts !== 1 ? 's' : ''} will be added</p>` : ''}
+                ${preview.newTags > 0 ? `<p><strong>${preview.newTags}</strong> new tag${preview.newTags !== 1 ? 's' : ''} will be added</p>` : ''}
+            </div>
+            <p class="text-muted">Your existing data will not be modified.</p>
+            <div class="modal-actions">
+                <button class="btn btn--secondary" id="modal-cancel">Cancel</button>
+                <button class="btn btn--primary" id="modal-confirm-merge" ${preview.newEntries === 0 && preview.newAccounts === 0 ? 'disabled' : ''}>
+                    ${preview.newEntries === 0 && preview.newAccounts === 0 ? 'Nothing to Merge' : 'Merge Now'}
+                </button>
+            </div>
+        `);
+
+        document.getElementById('modal-cancel').addEventListener('click', closeModal);
+        var confirmBtn = document.getElementById('modal-confirm-merge');
+        if (confirmBtn && (preview.newEntries > 0 || preview.newAccounts > 0)) {
+            confirmBtn.addEventListener('click', () => {
+                closeModal();
+                if (onConfirm) onConfirm();
+            });
+        }
     }
 
     // =====================================================================
@@ -130,6 +170,7 @@
         closeModal,
         showDeleteConfirm,
         showRestoreConfirm,
+        showMergePreview,
         showCurrencyPicker,
     };
 

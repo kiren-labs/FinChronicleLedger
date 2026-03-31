@@ -7,7 +7,7 @@
     'use strict';
 
     const DB_NAME = 'FinChronicleLedgerDB';
-    const DB_VERSION = 1;
+    const DB_VERSION = 4;
 
     let _db = null;
 
@@ -27,27 +27,62 @@
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
+                const oldVersion = event.oldVersion;
 
-                // Accounts store
-                if (!db.objectStoreNames.contains('accounts')) {
-                    const accountStore = db.createObjectStore('accounts', { keyPath: 'id' });
-                    accountStore.createIndex('type', 'type', { unique: false });
-                    accountStore.createIndex('code', 'code', { unique: true });
-                    accountStore.createIndex('isActive', 'isActive', { unique: false });
+                // === v1 baseline: accounts, journal_entries, app_settings ===
+                if (oldVersion < 1) {
+                    // Accounts store
+                    if (!db.objectStoreNames.contains('accounts')) {
+                        const accountStore = db.createObjectStore('accounts', { keyPath: 'id' });
+                        accountStore.createIndex('type', 'type', { unique: false });
+                        accountStore.createIndex('code', 'code', { unique: true });
+                        accountStore.createIndex('isActive', 'isActive', { unique: false });
+                    }
+
+                    // Journal entries store
+                    if (!db.objectStoreNames.contains('journal_entries')) {
+                        const entryStore = db.createObjectStore('journal_entries', { keyPath: 'id' });
+                        entryStore.createIndex('date', 'date', { unique: false });
+                        entryStore.createIndex('type', 'type', { unique: false });
+                        entryStore.createIndex('date_type', ['date', 'type'], { unique: false });
+                        entryStore.createIndex('source', 'source', { unique: false });
+                    }
+
+                    // App settings store (key-value)
+                    if (!db.objectStoreNames.contains('app_settings')) {
+                        db.createObjectStore('app_settings', { keyPath: 'key' });
+                    }
                 }
 
-                // Journal entries store
-                if (!db.objectStoreNames.contains('journal_entries')) {
-                    const entryStore = db.createObjectStore('journal_entries', { keyPath: 'id' });
-                    entryStore.createIndex('date', 'date', { unique: false });
-                    entryStore.createIndex('type', 'type', { unique: false });
-                    entryStore.createIndex('date_type', ['date', 'type'], { unique: false });
-                    entryStore.createIndex('source', 'source', { unique: false });
+                // === v2: recurring_templates, recurring_history ===
+                if (oldVersion < 2) {
+                    if (!db.objectStoreNames.contains('recurring_templates')) {
+                        const templateStore = db.createObjectStore('recurring_templates', { keyPath: 'id' });
+                        templateStore.createIndex('isActive', 'isActive', { unique: false });
+                        templateStore.createIndex('nextDueDate', 'nextDueDate', { unique: false });
+                    }
+
+                    if (!db.objectStoreNames.contains('recurring_history')) {
+                        const historyStore = db.createObjectStore('recurring_history', { keyPath: 'id' });
+                        historyStore.createIndex('templateId', 'templateId', { unique: false });
+                        historyStore.createIndex('dueDate', 'dueDate', { unique: false });
+                    }
                 }
 
-                // App settings store (key-value)
-                if (!db.objectStoreNames.contains('app_settings')) {
-                    db.createObjectStore('app_settings', { keyPath: 'key' });
+                // === v3: budgets ===
+                if (oldVersion < 3) {
+                    if (!db.objectStoreNames.contains('budgets')) {
+                        const budgetStore = db.createObjectStore('budgets', { keyPath: 'id' });
+                        budgetStore.createIndex('month', 'month', { unique: true });
+                    }
+                }
+
+                // === v4: tags ===
+                if (oldVersion < 4) {
+                    if (!db.objectStoreNames.contains('tags')) {
+                        const tagStore = db.createObjectStore('tags', { keyPath: 'id' });
+                        tagStore.createIndex('name', 'name', { unique: true });
+                    }
                 }
             };
 
@@ -141,6 +176,17 @@
     async function updateAccount(account) {
         const tx = _tx('accounts', 'readwrite');
         tx.objectStore('accounts').put(account);
+        return _promisifyTx(tx);
+    }
+
+    /**
+     * Delete an account by ID.
+     * @param {string} id
+     * @returns {Promise<void>}
+     */
+    async function deleteAccount(id) {
+        const tx = _tx('accounts', 'readwrite');
+        tx.objectStore('accounts').delete(id);
         return _promisifyTx(tx);
     }
 
@@ -275,6 +321,111 @@
     }
 
     // =====================================================================
+    // Recurring Templates CRUD
+    // =====================================================================
+
+    async function saveRecurringTemplate(template) {
+        const tx = _tx('recurring_templates', 'readwrite');
+        tx.objectStore('recurring_templates').put(template);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllRecurringTemplates() {
+        const tx = _tx('recurring_templates', 'readonly');
+        return _promisify(tx.objectStore('recurring_templates').getAll());
+    }
+
+    async function deleteRecurringTemplate(id) {
+        const tx = _tx('recurring_templates', 'readwrite');
+        tx.objectStore('recurring_templates').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    // =====================================================================
+    // Recurring History CRUD
+    // =====================================================================
+
+    async function saveRecurringHistory(record) {
+        const tx = _tx('recurring_history', 'readwrite');
+        tx.objectStore('recurring_history').put(record);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllRecurringHistory() {
+        const tx = _tx('recurring_history', 'readonly');
+        return _promisify(tx.objectStore('recurring_history').getAll());
+    }
+
+    async function getRecurringHistoryByTemplate(templateId) {
+        const tx = _tx('recurring_history', 'readonly');
+        const index = tx.objectStore('recurring_history').index('templateId');
+        return _promisify(index.getAll(templateId));
+    }
+
+    // =====================================================================
+    // Budgets CRUD
+    // =====================================================================
+
+    async function saveBudget(budget) {
+        const tx = _tx('budgets', 'readwrite');
+        tx.objectStore('budgets').put(budget);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllBudgets() {
+        const tx = _tx('budgets', 'readonly');
+        return _promisify(tx.objectStore('budgets').getAll());
+    }
+
+    async function getBudgetByMonth(month) {
+        const tx = _tx('budgets', 'readonly');
+        const index = tx.objectStore('budgets').index('month');
+        return _promisify(index.get(month));
+    }
+
+    async function deleteBudget(id) {
+        const tx = _tx('budgets', 'readwrite');
+        tx.objectStore('budgets').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    // =====================================================================
+    // Tags CRUD
+    // =====================================================================
+
+    async function saveTag(tag) {
+        const tx = _tx('tags', 'readwrite');
+        tx.objectStore('tags').put(tag);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllTags() {
+        const tx = _tx('tags', 'readonly');
+        return _promisify(tx.objectStore('tags').getAll());
+    }
+
+    async function deleteTag(id) {
+        const tx = _tx('tags', 'readwrite');
+        tx.objectStore('tags').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    async function bulkSaveTags(tags) {
+        const tx = _tx('tags', 'readwrite');
+        const store = tx.objectStore('tags');
+        for (var i = 0; i < tags.length; i++) {
+            store.put(tags[i]);
+        }
+        return _promisifyTx(tx);
+    }
+
+    async function clearAllTags() {
+        const tx = _tx('tags', 'readwrite');
+        tx.objectStore('tags').clear();
+        return _promisifyTx(tx);
+    }
+
+    // =====================================================================
     // Export
     // =====================================================================
     global.FCL = global.FCL || {};
@@ -286,6 +437,7 @@
         bulkSaveAccounts,
         getAllAccounts,
         updateAccount,
+        deleteAccount,
         getAccount,
         clearAllAccounts,
         // Journal Entries
@@ -299,6 +451,25 @@
         getSetting,
         setSetting,
         getAllSettings,
+        // Recurring Templates
+        saveRecurringTemplate,
+        getAllRecurringTemplates,
+        deleteRecurringTemplate,
+        // Recurring History
+        saveRecurringHistory,
+        getAllRecurringHistory,
+        getRecurringHistoryByTemplate,
+        // Budgets
+        saveBudget,
+        getAllBudgets,
+        getBudgetByMonth,
+        deleteBudget,
+        // Tags
+        saveTag,
+        getAllTags,
+        deleteTag,
+        bulkSaveTags,
+        clearAllTags,
     };
 
 })(window);

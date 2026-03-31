@@ -10,9 +10,14 @@
     const Settings = () => global.FCL.SettingsService;
     const AccountService = () => global.FCL.AccountService;
     const TransactionService = () => global.FCL.TransactionService;
+    const BudgetService = () => global.FCL.BudgetService;
+    const TagService = () => global.FCL.TagService;
     const R = () => global.FCL.UI.Renderer;
 
     let _advancedLines = 2; // Number of journal lines in advanced editor
+    let _splitMode = false; // Whether split transaction mode is active
+    let _splitLines = 2;    // Number of split lines in simple mode
+    let _selectedTagIds = []; // Tag IDs selected for current transaction
 
     // =====================================================================
     // Render
@@ -89,11 +94,41 @@
                         <label for="notes">Notes (optional)</label>
                         <input type="text" id="notes" maxlength="500" placeholder="Transfer notes">
                     </div>
+                    ${_renderTagPicker()}
                     <button type="submit" class="btn btn--primary btn--full">${isEditing ? 'Update Transfer' : 'Transfer'}</button>
                     ${isEditing ? '<button type="button" class="btn btn--secondary btn--full" id="cancel-edit">Cancel</button>' : ''}
                 </form>
             `;
         } else {
+            // Build split lines HTML if split mode is active
+            let splitHTML = '';
+            if (_splitMode) {
+                const symbol = Settings().getCurrencySymbol();
+                let splitLinesHTML = '';
+                for (let i = 0; i < _splitLines; i++) {
+                    splitLinesHTML += `
+                        <div class="split-line" data-split="${i}">
+                            <select class="split-category" data-split="${i}" required>
+                                ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                            <input type="number" class="split-amount" data-split="${i}" step="0.01" min="0.01" placeholder="0.00" inputmode="decimal" required>
+                            ${_splitLines > 2 ? `<button type="button" class="btn btn--ghost btn--small split-remove-btn" data-split="${i}" title="Remove"><i class="ri-close-line"></i></button>` : ''}
+                        </div>
+                    `;
+                }
+                splitHTML = `
+                    <div class="split-container">
+                        <div class="split-header">
+                            <span class="split-label">Split Categories</span>
+                            <button type="button" class="btn btn--ghost btn--small" id="cancel-split">Cancel Split</button>
+                        </div>
+                        ${splitLinesHTML}
+                        <button type="button" class="btn btn--secondary btn--small" id="add-split-line">+ Add Category</button>
+                        <div class="split-total" id="split-total">Total: ${symbol}0.00</div>
+                    </div>
+                `;
+            }
+
             container.innerHTML = `
                 <form id="transaction-form" data-type="${currentType}">
                     <div class="form-type-toggle">
@@ -101,6 +136,7 @@
                         <button type="button" class="type-btn ${currentType === 'expense' ? 'type-btn--active' : ''}" data-type="expense">Expense</button>
                         <button type="button" class="type-btn ${currentType === 'transfer' ? 'type-btn--active' : ''}" data-type="transfer">Transfer</button>
                     </div>
+                    ${_splitMode ? '' : `
                     <div class="form-group">
                         <label for="amount">Amount (${Settings().getCurrencySymbol()})</label>
                         <input type="number" id="amount" step="0.01" min="0.01" required placeholder="0.00" inputmode="decimal">
@@ -111,6 +147,8 @@
                             ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
                         </select>
                     </div>
+                    `}
+                    ${splitHTML}
                     <div class="form-group">
                         <label for="date">Date</label>
                         <input type="date" id="date" value="${today}" required>
@@ -119,6 +157,8 @@
                         <label for="notes">Notes (optional)</label>
                         <input type="text" id="notes" maxlength="500" placeholder="Add a note">
                     </div>
+                    ${_renderTagPicker()}
+                    ${!_splitMode && !isEditing ? '<button type="button" class="btn btn--ghost btn--small split-toggle-btn" id="toggle-split"><i class="ri-scissors-line"></i> Split this transaction</button>' : ''}
                     <button type="submit" class="btn btn--primary btn--full">${isEditing ? 'Update Transaction' : 'Add Transaction'}</button>
                     ${isEditing ? '<button type="button" class="btn btn--secondary btn--full" id="cancel-edit">Cancel</button>' : ''}
                 </form>
@@ -135,24 +175,123 @@
             btn.addEventListener('click', () => {
                 const form = document.getElementById('transaction-form');
                 if (form) form.dataset.type = btn.dataset.type;
+                _splitMode = false;
+                _splitLines = 2;
                 renderSimpleForm();
             });
+        });
+
+        // Split toggle
+        const splitToggle = document.getElementById('toggle-split');
+        if (splitToggle) {
+            splitToggle.addEventListener('click', () => {
+                _splitMode = true;
+                _splitLines = 2;
+                renderSimpleForm();
+            });
+        }
+
+        // Cancel split
+        const cancelSplit = document.getElementById('cancel-split');
+        if (cancelSplit) {
+            cancelSplit.addEventListener('click', () => {
+                _splitMode = false;
+                _splitLines = 2;
+                renderSimpleForm();
+            });
+        }
+
+        // Add split line
+        const addSplitLine = document.getElementById('add-split-line');
+        if (addSplitLine) {
+            addSplitLine.addEventListener('click', () => {
+                _splitLines++;
+                renderSimpleForm();
+            });
+        }
+
+        // Remove split line
+        document.querySelectorAll('.split-remove-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (_splitLines > 2) {
+                    _splitLines--;
+                    renderSimpleForm();
+                }
+            });
+        });
+
+        // Real-time split total
+        document.querySelectorAll('.split-amount').forEach(input => {
+            input.addEventListener('input', _updateSplitTotal);
         });
 
         // Form submit
         const form = document.getElementById('transaction-form');
         if (form) {
-            form.addEventListener('submit', handleSimpleSubmit);
+            form.addEventListener('submit', _splitMode ? handleSplitSubmit : handleSimpleSubmit);
         }
+
+        // Tag chips
+        _bindTagEvents();
 
         // Cancel edit
         const cancelBtn = document.getElementById('cancel-edit');
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => {
                 State().setEditingEntryId(null);
+                _splitMode = false;
+                _splitLines = 2;
                 renderSimpleForm();
             });
         }
+    }
+
+    function _updateSplitTotal() {
+        let total = 0;
+        document.querySelectorAll('.split-amount').forEach(input => {
+            total += parseFloat(input.value) || 0;
+        });
+        const el = document.getElementById('split-total');
+        if (el) {
+            el.textContent = 'Total: ' + Settings().getCurrencySymbol() + total.toFixed(2);
+        }
+    }
+
+    // =====================================================================
+    // Tag Picker
+    // =====================================================================
+
+    function _renderTagPicker() {
+        var tags = TagService() ? TagService().getAllTags() : [];
+        if (tags.length === 0) return '';
+
+        var chips = tags.map(function (tag) {
+            var selected = _selectedTagIds.indexOf(tag.id) !== -1;
+            return '<button type="button" class="tag-chip' + (selected ? ' tag-chip--selected' : '') + '" data-tag-id="' + R().escapeHTML(tag.id) + '" style="border-color:' + R().escapeHTML(tag.color) + (selected ? ';background:' + R().escapeHTML(tag.color) + ';color:#fff' : '') + '">' + R().escapeHTML(tag.displayName) + '</button>';
+        }).join('');
+
+        return '<div class="form-group"><label>Tags</label><div class="tag-picker">' + chips + '</div></div>';
+    }
+
+    function _bindTagEvents() {
+        document.querySelectorAll('.tag-chip[data-tag-id]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var tagId = btn.dataset.tagId;
+                var idx = _selectedTagIds.indexOf(tagId);
+                if (idx === -1) {
+                    _selectedTagIds.push(tagId);
+                } else {
+                    _selectedTagIds.splice(idx, 1);
+                }
+                // Re-render just the picker area
+                var picker = btn.closest('.tag-picker');
+                if (picker) {
+                    var parent = picker.parentElement;
+                    parent.outerHTML = _renderTagPicker();
+                    _bindTagEvents();
+                }
+            });
+        });
     }
 
     // =====================================================================
@@ -334,11 +473,94 @@
         }
 
         if (result.success) {
+            // Save tags if any selected
+            if (_selectedTagIds.length > 0 && result.entry && TagService()) {
+                await TagService().setEntryTags(result.entry.id, _selectedTagIds.slice());
+            }
+
             R().showToast(editingId ? 'Transaction updated!' : 'Transaction added!', 'success');
+
+            // Budget alert check (on expense create/edit)
+            if (type === 'expense' && BudgetService()) {
+                var month = date.slice(0, 7);
+                var categoryCode = Types().CategoryAccountMap[category];
+                var catAcct = AccountService().getAccountByCode(categoryCode);
+                if (catAcct) {
+                    var alert = BudgetService().checkBudgetAlert(month, catAcct.id);
+                    if (alert) {
+                        var msg = alert.type === 'over'
+                            ? 'Over budget by ' + R().formatCurrency(Math.abs(alert.remaining)) + ' for this category'
+                            : 'Budget alert: ' + alert.percentageUsed + '% used for this category';
+                        var level = alert.type === 'over' ? 'error' : 'warning';
+                        setTimeout(function () { R().showToast(msg, level); }, 800);
+                    }
+                }
+            }
+
             State().setEditingEntryId(null);
+            _selectedTagIds = [];
             resetForm();
         } else {
             R().showToast(result.errors[0] || 'Error saving transaction', 'error');
+        }
+    }
+
+    async function handleSplitSubmit(e) {
+        e.preventDefault();
+
+        const form = document.getElementById('transaction-form');
+        const type = form.dataset.type;
+        const date = document.getElementById('date').value;
+        const notes = (document.getElementById('notes') || {}).value || '';
+        const assetAccount = AccountService().getDefaultAssetAccount();
+
+        if (!assetAccount) {
+            R().showToast('Default asset account not found', 'error');
+            return;
+        }
+
+        // Collect split lines
+        const splitLines = [];
+        let hasError = false;
+        document.querySelectorAll('.split-line').forEach(lineEl => {
+            const categoryName = lineEl.querySelector('.split-category').value;
+            const amount = parseFloat(lineEl.querySelector('.split-amount').value);
+            const categoryCode = Types().CategoryAccountMap[categoryName];
+            const categoryAccount = AccountService().getAccountByCode(categoryCode);
+
+            if (!categoryAccount) {
+                hasError = true;
+                return;
+            }
+            if (!amount || amount <= 0) {
+                hasError = true;
+                return;
+            }
+            splitLines.push({ accountId: categoryAccount.id, amount });
+        });
+
+        if (hasError || splitLines.length < 2) {
+            R().showToast('Each split line needs a category and amount (min. 2 lines)', 'error');
+            return;
+        }
+
+        const result = await TransactionService().createSplitTransaction({
+            type, splitLines, assetAccountId: assetAccount.id, date, notes,
+        });
+
+        if (result.success) {
+            // Save tags if any selected
+            if (_selectedTagIds.length > 0 && result.entry && TagService()) {
+                await TagService().setEntryTags(result.entry.id, _selectedTagIds.slice());
+            }
+
+            R().showToast('Split transaction added!', 'success');
+            _splitMode = false;
+            _splitLines = 2;
+            _selectedTagIds = [];
+            resetForm();
+        } else {
+            R().showToast(result.errors[0] || 'Error saving split transaction', 'error');
         }
     }
 
@@ -377,6 +599,9 @@
     // =====================================================================
 
     function resetForm() {
+        _splitMode = false;
+        _splitLines = 2;
+        _selectedTagIds = [];
         const form = document.getElementById('transaction-form');
         if (form) {
             form.dataset.type = 'expense';
@@ -390,6 +615,7 @@
      */
     function populateFormForEdit(entry) {
         State().setEditingEntryId(entry.id);
+        _selectedTagIds = Array.isArray(entry.tags) ? entry.tags.slice() : [];
         const info = TransactionService().getSimpleDisplayInfo(entry);
         if (!info) return;
 

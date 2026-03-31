@@ -6,8 +6,8 @@
  * falls back to network, and cleans old caches on activate.
  */
 
-const CACHE_NAME = 'finchronicle-ledger-v1.1.0';
-const CDN_CACHE_NAME = 'finchronicle-cdn-v1.1.0';
+const CACHE_NAME = 'finchronicle-ledger-v1.2.0';
+const CDN_CACHE_NAME = 'finchronicle-cdn-v1.2.0';
 const CDN_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const CACHED_URLS = [
@@ -24,6 +24,8 @@ const CACHED_URLS = [
     './js/domain/ledger.js',
     './js/domain/chart-of-accounts.js',
     './js/domain/reports.js',
+    './js/domain/recurring.js',
+    './js/domain/budget.js',
     './js/infrastructure/db.js',
     './js/infrastructure/storage.js',
     './js/infrastructure/file-io.js',
@@ -35,6 +37,11 @@ const CACHED_URLS = [
     './js/application/import-export-service.js',
     './js/application/backup-service.js',
     './js/application/settings-service.js',
+    './js/application/search-service.js',
+    './js/application/recurring-service.js',
+    './js/application/budget-service.js',
+    './js/application/tag-service.js',
+    './js/application/csv-import-service.js',
     './js/ui/renderer.js',
     './js/ui/forms.js',
     './js/ui/list.js',
