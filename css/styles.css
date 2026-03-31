@@ -3352,3 +3352,96 @@ details.faq-item p {
     margin-bottom: var(--space-md);
     padding: var(--space-xs) 0;
 }
+
+/* ==========================================================================
+   Split Transactions
+   ========================================================================== */
+
+.split-toggle-btn {
+    margin-bottom: var(--space-md);
+}
+
+.split-container {
+    background: var(--color-bg);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.split-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+
+.split-label {
+    font-weight: 600;
+    font-size: var(--font-md);
+    color: var(--color-text);
+}
+
+.split-line {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+
+.split-line select {
+    flex: 2;
+    padding: var(--space-sm);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    font-size: var(--font-md);
+    font-family: inherit;
+    color: var(--color-text);
+}
+
+.split-line input {
+    flex: 1;
+    padding: var(--space-sm);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    font-size: var(--font-md);
+    font-family: inherit;
+    color: var(--color-text);
+}
+
+.split-total {
+    text-align: right;
+    font-weight: 600;
+    font-size: var(--font-md);
+    margin-top: var(--space-sm);
+    color: var(--color-text);
+}
+
+/* Split badge in list */
+.transaction-badge {
+    display: inline-block;
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.split-badge {
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+}
+
+.split-breakdown {
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+    padding: var(--space-xs) 0;
+    line-height: 1.5;
+}
+
+.split-detail {
+    white-space: nowrap;
+}

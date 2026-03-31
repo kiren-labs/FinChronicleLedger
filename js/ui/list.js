@@ -275,6 +275,38 @@
         `;
     }
 
+    function _renderSplitListItem(entry, accounts) {
+        const breakdown = Ledger().getSplitBreakdown(entry);
+        if (!breakdown) return '';
+
+        const amountClass = entry.type === 'income' ? 'amount--income' : 'amount--expense';
+        const prefix = entry.type === 'income' ? '+' : '-';
+
+        const splitDetails = breakdown.lines.map(l => {
+            const acc = accounts.get(l.accountId);
+            const name = acc ? R().escapeHTML(acc.name) : 'Unknown';
+            return `<span class="split-detail">${name} ${R().formatCurrency(l.amount)}</span>`;
+        }).join(' · ');
+
+        return `
+            <div class="transaction-item" data-id="${R().escapeHTML(entry.id)}">
+                <div class="transaction-header">
+                    <span class="transaction-date">${R().formatDate(entry.date)}</span>
+                    <span class="transaction-amount ${amountClass}">${prefix}${R().formatCurrency(breakdown.total)}</span>
+                </div>
+                <div class="transaction-body">
+                    <span class="transaction-badge split-badge">Split</span>
+                    ${entry.description ? `<span class="transaction-notes">${R().escapeHTML(entry.description)}</span>` : ''}
+                </div>
+                <div class="split-breakdown">${splitDetails}</div>
+                <div class="transaction-actions">
+                    <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
+                    <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${R().escapeHTML(entry.id)}"><i class="ri-delete-bin-line"></i> Delete</button>
+                </div>
+            </div>
+        `;
+    }
+
     // =====================================================================
     // Event Binding
     // =====================================================================
