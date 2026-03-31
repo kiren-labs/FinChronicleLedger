@@ -652,10 +652,18 @@
                 await TagService().setEntryTags(result.entry.id, _selectedTagIds.slice());
             }
 
+            // Save payee on entry
+            if (_selectedPayeeId && result.entry) {
+                result.entry.payeeId = _selectedPayeeId;
+                await global.FCL.DB.saveJournalEntry(result.entry);
+                State().updateEntry(result.entry);
+            }
+
             R().showToast('Split transaction added!', 'success');
             _splitMode = false;
             _splitLines = 2;
             _selectedTagIds = [];
+            _selectedPayeeId = null;
             resetForm();
         } else {
             R().showToast(result.errors[0] || 'Error saving split transaction', 'error');
@@ -700,6 +708,7 @@
         _splitMode = false;
         _splitLines = 2;
         _selectedTagIds = [];
+        _selectedPayeeId = null;
         const form = document.getElementById('transaction-form');
         if (form) {
             form.dataset.type = 'expense';
@@ -714,6 +723,7 @@
     function populateFormForEdit(entry) {
         State().setEditingEntryId(entry.id);
         _selectedTagIds = Array.isArray(entry.tags) ? entry.tags.slice() : [];
+        _selectedPayeeId = entry.payeeId || null;
         const info = TransactionService().getSimpleDisplayInfo(entry);
         if (!info) return;
 

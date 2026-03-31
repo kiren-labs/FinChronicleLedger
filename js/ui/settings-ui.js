@@ -16,6 +16,8 @@
     const BudgetService = () => global.FCL.BudgetService;
     const TagService = () => global.FCL.TagService;
     const CSVImportService = () => global.FCL.CSVImportService;
+    const PayeeService = () => global.FCL.PayeeService;
+    const ReconciliationService = () => global.FCL.ReconciliationService;
     const FileIO = () => global.FCL.FileIO;
     const R = () => global.FCL.UI.Renderer;
     const Modals = () => global.FCL.UI.Modals;
@@ -95,6 +97,24 @@
                 </button>
             </div>
 
+            <!-- Payees -->
+            <div class="settings-section">
+                <h3>Payees</h3>
+                ${_renderPayeeList()}
+                <button class="btn btn--secondary btn--full" id="add-payee-btn">
+                    <i class="ri-user-add-line"></i> Add Payee
+                </button>
+            </div>
+
+            <!-- Reconciliation -->
+            <div class="settings-section">
+                <h3>Reconciliation</h3>
+                ${_renderReconciliationList()}
+                <button class="btn btn--secondary btn--full" id="start-recon-btn">
+                    <i class="ri-scales-3-line"></i> Start New Reconciliation
+                </button>
+            </div>
+
             <!-- Backup Status -->
             <div class="settings-section">
                 <h3>Backup Status</h3>
@@ -165,6 +185,8 @@
         _bindAccountEvents();
         _bindTagEvents();
         _bindCSVImportEvents();
+        _bindPayeeEvents();
+        _bindReconciliationEvents();
         _applyBarWidths(container);
     }
 
