@@ -7,7 +7,7 @@
     'use strict';
 
     const DB_NAME = 'FinChronicleLedgerDB';
-    const DB_VERSION = 4;
+    const DB_VERSION = 7;
 
     let _db = null;
 
@@ -82,6 +82,37 @@
                     if (!db.objectStoreNames.contains('tags')) {
                         const tagStore = db.createObjectStore('tags', { keyPath: 'id' });
                         tagStore.createIndex('name', 'name', { unique: true });
+                    }
+                }
+
+                // === v5: payees ===
+                if (oldVersion < 5) {
+                    if (!db.objectStoreNames.contains('payees')) {
+                        var payeeStore = db.createObjectStore('payees', { keyPath: 'id' });
+                        payeeStore.createIndex('name', 'name', { unique: true });
+                    }
+                }
+
+                // === v6: financial_goals + goal_contributions ===
+                if (oldVersion < 6) {
+                    if (!db.objectStoreNames.contains('financial_goals')) {
+                        var goalStore = db.createObjectStore('financial_goals', { keyPath: 'id' });
+                        goalStore.createIndex('status', 'status', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains('goal_contributions')) {
+                        var contribStore = db.createObjectStore('goal_contributions', { keyPath: 'id' });
+                        contribStore.createIndex('goalId', 'goalId', { unique: false });
+                        contribStore.createIndex('date', 'date', { unique: false });
+                    }
+                }
+
+                // === v7: reconciliations ===
+                if (oldVersion < 7) {
+                    if (!db.objectStoreNames.contains('reconciliations')) {
+                        var reconStore = db.createObjectStore('reconciliations', { keyPath: 'id' });
+                        reconStore.createIndex('accountId', 'accountId', { unique: false });
+                        reconStore.createIndex('month', 'month', { unique: false });
+                        reconStore.createIndex('status', 'status', { unique: false });
                     }
                 }
             };
@@ -426,6 +457,125 @@
     }
 
     // =====================================================================
+    // Payees CRUD
+    // =====================================================================
+
+    async function savePayee(payee) {
+        var tx = _tx('payees', 'readwrite');
+        tx.objectStore('payees').put(payee);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllPayees() {
+        var tx = _tx('payees', 'readonly');
+        return _promisify(tx.objectStore('payees').getAll());
+    }
+
+    async function deletePayee(id) {
+        var tx = _tx('payees', 'readwrite');
+        tx.objectStore('payees').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    async function clearAllPayees() {
+        var tx = _tx('payees', 'readwrite');
+        tx.objectStore('payees').clear();
+        return _promisifyTx(tx);
+    }
+
+    // =====================================================================
+    // Financial Goals CRUD
+    // =====================================================================
+
+    async function saveGoal(goal) {
+        var tx = _tx('financial_goals', 'readwrite');
+        tx.objectStore('financial_goals').put(goal);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllGoals() {
+        var tx = _tx('financial_goals', 'readonly');
+        return _promisify(tx.objectStore('financial_goals').getAll());
+    }
+
+    async function deleteGoal(id) {
+        var tx = _tx('financial_goals', 'readwrite');
+        tx.objectStore('financial_goals').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    // =====================================================================
+    // Goal Contributions CRUD
+    // =====================================================================
+
+    async function saveContribution(contribution) {
+        var tx = _tx('goal_contributions', 'readwrite');
+        tx.objectStore('goal_contributions').put(contribution);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllContributions() {
+        var tx = _tx('goal_contributions', 'readonly');
+        return _promisify(tx.objectStore('goal_contributions').getAll());
+    }
+
+    async function getContributionsByGoal(goalId) {
+        var tx = _tx('goal_contributions', 'readonly');
+        var index = tx.objectStore('goal_contributions').index('goalId');
+        return _promisify(index.getAll(goalId));
+    }
+
+    async function deleteContribution(id) {
+        var tx = _tx('goal_contributions', 'readwrite');
+        tx.objectStore('goal_contributions').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    async function deleteContributionsByGoal(goalId) {
+        var tx = _tx('goal_contributions', 'readwrite');
+        var index = tx.objectStore('goal_contributions').index('goalId');
+        var request = index.openCursor(goalId);
+        return new Promise(function (resolve, reject) {
+            request.onsuccess = function (e) {
+                var cursor = e.target.result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                }
+            };
+            tx.oncomplete = resolve;
+            tx.onerror = function () { reject(tx.error); };
+        });
+    }
+
+    // =====================================================================
+    // Reconciliations CRUD
+    // =====================================================================
+
+    async function saveReconciliation(record) {
+        var tx = _tx('reconciliations', 'readwrite');
+        tx.objectStore('reconciliations').put(record);
+        return _promisifyTx(tx);
+    }
+
+    async function getAllReconciliations() {
+        var tx = _tx('reconciliations', 'readonly');
+        return _promisify(tx.objectStore('reconciliations').getAll());
+    }
+
+    async function getReconciliationsByAccount(accountId) {
+        var tx = _tx('reconciliations', 'readonly');
+        var index = tx.objectStore('reconciliations').index('accountId');
+        return _promisify(index.getAll(accountId));
+    }
+
+    async function deleteReconciliation(id) {
+        var tx = _tx('reconciliations', 'readwrite');
+        tx.objectStore('reconciliations').delete(id);
+        return _promisifyTx(tx);
+    }
+
+    // =====================================================================
     // Export
     // =====================================================================
     global.FCL = global.FCL || {};
@@ -470,6 +620,26 @@
         deleteTag,
         bulkSaveTags,
         clearAllTags,
+        // Payees
+        savePayee,
+        getAllPayees,
+        deletePayee,
+        clearAllPayees,
+        // Financial Goals
+        saveGoal,
+        getAllGoals,
+        deleteGoal,
+        // Goal Contributions
+        saveContribution,
+        getAllContributions,
+        getContributionsByGoal,
+        deleteContribution,
+        deleteContributionsByGoal,
+        // Reconciliations
+        saveReconciliation,
+        getAllReconciliations,
+        getReconciliationsByAccount,
+        deleteReconciliation,
     };
 
 })(window);
