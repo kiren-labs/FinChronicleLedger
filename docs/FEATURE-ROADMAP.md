@@ -884,7 +884,7 @@ Show backup status in Settings: last backup date, days since backup, prominent c
 
 ---
 
-## 8. Payee Management
+## 8. Payee Management ✅
 
 **Priority:** P1
 **Complexity:** Low
@@ -929,7 +929,7 @@ The `description` field is free text. There is no structured payee record. Users
 
 ---
 
-## 9. Transaction Reconciliation
+## 9. Transaction Reconciliation ✅
 
 **Priority:** P1
 **Complexity:** High
@@ -1060,7 +1060,7 @@ function autoMatch(bankTxs, appEntries) {
 
 ---
 
-## 10. Financial Goals Tracking
+## 10. Financial Goals Tracking ✅
 
 **Priority:** P1
 **Complexity:** Medium
