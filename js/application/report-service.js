@@ -175,6 +175,18 @@
         return Reports().getAvailableMonths(State().getEntries());
     }
 
+    /**
+     * Get top spending categories for a month.
+     * @param {string} month
+     * @param {number} [limit=5]
+     * @returns {Array}
+     */
+    function getTopSpendingCategories(month, limit) {
+        return Reports().getTopSpendingCategories(
+            month, State().getEntries(), State().getAccounts(), limit || 5
+        );
+    }
+
     // =====================================================================
     // Export
     // =====================================================================
@@ -187,6 +199,7 @@
         getGroupedByMonth,
         getGroupedByCategory,
         getAvailableMonths,
+        getTopSpendingCategories,
     };
 
 })(window);

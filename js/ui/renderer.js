@@ -11,6 +11,7 @@
     /**
      * Master UI refresh — called on every state change.
      * Delegates to sub-renderers.
+     * Wrapped with error boundary to prevent one broken panel from crashing the whole UI.
      */
     function updateUI() {
         const mode = Settings().getUIMode();
@@ -21,21 +22,29 @@
         // Re-render active tab content
         const activeTab = getActiveTab();
 
-        if (activeTab === 'add') {
-            if (global.FCL.UI.Forms) global.FCL.UI.Forms.render(mode);
-        } else if (activeTab === 'list') {
-            if (global.FCL.UI.List) global.FCL.UI.List.render(mode);
-        } else if (activeTab === 'groups') {
-            if (global.FCL.UI.Groups) global.FCL.UI.Groups.render(mode);
-        } else if (activeTab === 'reports') {
-            if (global.FCL.UI.ReportsUI) global.FCL.UI.ReportsUI.render();
-        } else if (activeTab === 'settings') {
-            if (global.FCL.UI.SettingsUI) global.FCL.UI.SettingsUI.render();
+        try {
+            if (activeTab === 'add') {
+                if (global.FCL.UI.Forms) global.FCL.UI.Forms.render(mode);
+            } else if (activeTab === 'list') {
+                if (global.FCL.UI.List) global.FCL.UI.List.render(mode);
+            } else if (activeTab === 'groups') {
+                if (global.FCL.UI.Groups) global.FCL.UI.Groups.render(mode);
+            } else if (activeTab === 'reports') {
+                if (global.FCL.UI.ReportsUI) global.FCL.UI.ReportsUI.render();
+            } else if (activeTab === 'settings') {
+                if (global.FCL.UI.SettingsUI) global.FCL.UI.SettingsUI.render();
+            }
+        } catch (err) {
+            console.error('[FCL] Render error in tab "' + activeTab + '":', err);
         }
 
         // Always update summary if it's visible on the current tab
-        if (activeTab === 'add' || activeTab === 'list') {
-            if (global.FCL.UI.Summary) global.FCL.UI.Summary.render(mode);
+        try {
+            if (activeTab === 'add' || activeTab === 'list') {
+                if (global.FCL.UI.Summary) global.FCL.UI.Summary.render(mode);
+            }
+        } catch (err) {
+            console.error('[FCL] Summary render error:', err);
         }
     }
 
@@ -113,6 +122,22 @@
         return `${months[parseInt(m) - 1]} ${y}`;
     }
 
+    /**
+     * Escape a string for safe insertion into HTML via innerHTML.
+     * Use this for ALL user-supplied content rendered in templates.
+     * @param {string} str
+     * @returns {string}
+     */
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // =====================================================================
     // Export
     // =====================================================================
@@ -126,6 +151,7 @@
         formatCurrency,
         formatDate,
         formatMonth,
+        escapeHTML,
     };
 
 })(window);

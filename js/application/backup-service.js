@@ -8,7 +8,7 @@
     const State = () => global.FCL.State;
     const DB = () => global.FCL.DB;
 
-    const BACKUP_REMINDER_DAYS = 7;
+    const BACKUP_REMINDER_DAYS = 30;
 
     // =====================================================================
     // Backup Status

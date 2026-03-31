@@ -6,7 +6,9 @@
  * falls back to network, and cleans old caches on activate.
  */
 
-const CACHE_NAME = 'finchronicle-ledger-v1.0.0';
+const CACHE_NAME = 'finchronicle-ledger-v1.1.0';
+const CDN_CACHE_NAME = 'finchronicle-cdn-v1.1.0';
+const CDN_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const CACHED_URLS = [
     './',
@@ -73,7 +75,7 @@ self.addEventListener('activate', function (event) {
                 return Promise.all(
                     cacheNames
                         .filter(function (name) {
-                            return name !== CACHE_NAME;
+                            return name !== CACHE_NAME && name !== CDN_CACHE_NAME;
                         })
                         .map(function (name) {
                             console.log('[SW] Deleting old cache:', name);
@@ -100,24 +102,23 @@ self.addEventListener('fetch', function (event) {
         return;
     }
 
-    // Skip CDN requests (Remix Icons) — let them go to network
+    // CDN requests (Remix Icons) — network-first with separate cache
+    // Use network-first so that stale/compromised CDN responses are replaced on next online fetch
     if (event.request.url.includes('cdn.jsdelivr.net')) {
         event.respondWith(
-            caches.match(event.request)
-                .then(function (cached) {
-                    return cached || fetch(event.request).then(function (response) {
-                        // Cache CDN resources for offline use
-                        if (response.ok) {
-                            var responseClone = response.clone();
-                            caches.open(CACHE_NAME).then(function (cache) {
-                                cache.put(event.request, responseClone);
-                            });
-                        }
-                        return response;
-                    }).catch(function () {
-                        // CDN unavailable, return cached if available
-                        return cached;
-                    });
+            fetch(event.request)
+                .then(function (response) {
+                    if (response.ok) {
+                        var responseClone = response.clone();
+                        caches.open(CDN_CACHE_NAME).then(function (cache) {
+                            cache.put(event.request, responseClone);
+                        });
+                    }
+                    return response;
+                })
+                .catch(function () {
+                    // Network unavailable, fall back to cached CDN resource
+                    return caches.match(event.request);
                 })
         );
         return;

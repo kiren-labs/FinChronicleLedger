@@ -194,6 +194,30 @@
     }
 
     // =====================================================================
+    // Query Helpers (delegated from Domain for UI layer access)
+    // =====================================================================
+
+    /**
+     * Get simple display info from a journal entry.
+     * UI-layer delegate to Domain Ledger.getSimpleDisplayInfo.
+     * @param {Object} entry
+     * @returns {Object|null}
+     */
+    function getSimpleDisplayInfo(entry) {
+        return Ledger().getSimpleDisplayInfo(entry);
+    }
+
+    /**
+     * Get the total amount of a journal entry.
+     * UI-layer delegate to Domain Ledger.getEntryTotal.
+     * @param {Object} entry
+     * @returns {number}
+     */
+    function getEntryTotal(entry) {
+        return Ledger().getEntryTotal(entry);
+    }
+
+    // =====================================================================
     // Export
     // =====================================================================
     global.FCL = global.FCL || {};
@@ -203,6 +227,8 @@
         createAdvancedTransaction,
         editTransaction,
         deleteTransaction,
+        getSimpleDisplayInfo,
+        getEntryTotal,
     };
 
 })(window);

@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](VERSION.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](VERSION.md)
 [![Code of Conduct](https://img.shields.io/badge/code%20of%20conduct-contributor%20covenant-purple.svg)](CODE_OF_CONDUCT.md)
 [![Security](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
 
@@ -27,7 +27,7 @@ The app serves two audiences with a single codebase:
 
 ### Core
 - **100% Offline** — Works without internet. All data stored locally in IndexedDB.
-- **Privacy First** — Zero backend, zero analytics, zero tracking. Data never leaves your device.
+- **Privacy First** — Zero backend, zero analytics, zero tracking. Data never leaves your device. Content-Security-Policy enforced.
 - **No Sign-Up** — Open the app and start tracking immediately.
 - **Installable PWA** — Add to home screen like a native app on any device.
 - **Zero Dependencies** — Vanilla JS, plain CSS, no build step, no framework.
@@ -195,7 +195,7 @@ FinChronicleLedger/
 | Module Pattern | IIFE closures (`window.FCL`) | No bundler required |
 | PWA | Service Worker + Manifest | Offline-first, installable |
 | Icons | Remix Icon (self-hosted) | No CDN dependency |
-| IDs | `crypto.randomUUID()` | Collision-safe, merge-friendly |
+| IDs | `crypto.randomUUID()` with CSPRNG fallback | Collision-safe, merge-friendly |
 
 ---
 
@@ -237,6 +237,15 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 ## Security
 
 This app stores all data locally on your device. No data is ever transmitted to any server.
+
+Security measures include:
+- Content-Security-Policy (`script-src 'self'`)
+- All `innerHTML` content escaped via `escapeHTML()`
+- No inline event handlers
+- Backup restore validates and sanitizes all imported data
+- Pure string-based XSS sanitization in the Domain layer
+- CSPRNG-backed UUID generation
+- Service Worker with separate, network-first CDN cache
 
 For security concerns, see [SECURITY.md](SECURITY.md).
 

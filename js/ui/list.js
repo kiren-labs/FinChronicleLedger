@@ -7,7 +7,6 @@
 
     const State = () => global.FCL.State;
     const Types = () => global.FCL.Types;
-    const Ledger = () => global.FCL.Ledger;
     const AccountService = () => global.FCL.AccountService;
     const TransactionService = () => global.FCL.TransactionService;
     const ReportService = () => global.FCL.ReportService;
@@ -131,7 +130,7 @@
     // =====================================================================
 
     function _renderSimpleListItem(entry, accounts) {
-        const info = Ledger().getSimpleDisplayInfo(entry);
+        const info = TransactionService().getSimpleDisplayInfo(entry);
         let categoryName = '';
         let amountClass = '';
         let prefix = '';
@@ -140,39 +139,39 @@
             if (info.type === 'transfer') {
                 const from = accounts.get(info.fromAccountId);
                 const to = accounts.get(info.toAccountId);
-                categoryName = `${from ? from.name : '?'} → ${to ? to.name : '?'}`;
+                categoryName = `${R().escapeHTML(from ? from.name : '?')} → ${R().escapeHTML(to ? to.name : '?')}`;
                 amountClass = 'amount--transfer';
             } else {
                 const acc = accounts.get(info.categoryAccountId);
-                categoryName = acc ? acc.name : 'Unknown';
+                categoryName = R().escapeHTML(acc ? acc.name : 'Unknown');
                 amountClass = info.type === 'income' ? 'amount--income' : 'amount--expense';
                 prefix = info.type === 'income' ? '+' : '-';
             }
         }
 
         return `
-            <div class="transaction-item" data-id="${entry.id}">
+            <div class="transaction-item" data-id="${R().escapeHTML(entry.id)}">
                 <div class="transaction-header">
                     <span class="transaction-date">${R().formatDate(entry.date)}</span>
                     <span class="transaction-amount ${amountClass}">${prefix}${R().formatCurrency(info ? info.amount : 0)}</span>
                 </div>
                 <div class="transaction-body">
                     <span class="transaction-category">${categoryName}</span>
-                    ${entry.description ? `<span class="transaction-notes">${entry.description}</span>` : ''}
+                    ${entry.description ? `<span class="transaction-notes">${R().escapeHTML(entry.description)}</span>` : ''}
                 </div>
                 <div class="transaction-actions">
-                    <button class="btn btn--small btn--ghost action-edit" data-id="${entry.id}"><i class="ri-edit-line"></i> Edit</button>
-                    <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${entry.id}"><i class="ri-delete-bin-line"></i> Delete</button>
+                    <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
+                    <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${R().escapeHTML(entry.id)}"><i class="ri-delete-bin-line"></i> Delete</button>
                 </div>
             </div>
         `;
     }
 
     function _renderAdvancedListItem(entry, accounts) {
-        const total = Ledger().getEntryTotal(entry);
+        const total = TransactionService().getEntryTotal(entry);
         let linesHTML = entry.lines.map(line => {
             const acc = accounts.get(line.accountId);
-            const accName = acc ? `${acc.code} ${acc.name}` : 'Unknown';
+            const accName = acc ? `${acc.code} ${R().escapeHTML(acc.name)}` : 'Unknown';
             if (line.debit > 0) {
                 return `<div class="journal-line-display"><span class="line-dr">DR</span> <span>${accName}</span> <span class="amount--debit">${R().formatCurrency(line.debit)}</span></div>`;
             } else {
@@ -181,15 +180,15 @@
         }).join('');
 
         return `
-            <div class="transaction-item transaction-item--advanced" data-id="${entry.id}">
+            <div class="transaction-item transaction-item--advanced" data-id="${R().escapeHTML(entry.id)}">
                 <div class="transaction-header">
-                    <span class="transaction-date">${R().formatDate(entry.date)} • ${entry.type}</span>
+                    <span class="transaction-date">${R().formatDate(entry.date)} • ${R().escapeHTML(entry.type)}</span>
                 </div>
-                <div class="transaction-description">${entry.description || ''}</div>
+                <div class="transaction-description">${R().escapeHTML(entry.description || '')}</div>
                 <div class="journal-lines-display">${linesHTML}</div>
                 <div class="transaction-actions">
-                    <button class="btn btn--small btn--ghost action-edit" data-id="${entry.id}"><i class="ri-edit-line"></i> Edit</button>
-                    <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${entry.id}"><i class="ri-delete-bin-line"></i> Delete</button>
+                    <button class="btn btn--small btn--ghost action-edit" data-id="${R().escapeHTML(entry.id)}"><i class="ri-edit-line"></i> Edit</button>
+                    <button class="btn btn--small btn--ghost btn--danger action-delete" data-id="${R().escapeHTML(entry.id)}"><i class="ri-delete-bin-line"></i> Delete</button>
                 </div>
             </div>
         `;

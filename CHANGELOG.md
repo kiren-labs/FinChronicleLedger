@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] — 2026-03-01
+
+### Security
+
+- **XSS prevention**: All user-supplied content rendered via `innerHTML` is now escaped through `Renderer.escapeHTML()` across list.js, reports-ui.js, groups.js, and forms.js
+- **Content Security Policy**: Added `<meta http-equiv="Content-Security-Policy">` with strict `script-src 'self'` policy
+- **Inline handler removal**: Removed inline `onclick` attribute from install prompt button; all event listeners are now attached programmatically
+- **Backup restore hardening**: `restoreFromBackup()` now performs full structural validation, type coercion, string sanitization (via `sanitizeHTML`), and settings key whitelisting before importing any data
+- **Pure sanitizeHTML**: Rewrote `validators.js:sanitizeHTML()` as a pure string-based function — removed DOM dependency (`document.createElement`) from the Domain layer
+- **CSPRNG UUID fallback**: `generateId()` now falls back to `crypto.getRandomValues` instead of `Math.random` when `crypto.randomUUID()` is unavailable
+
+### Changed
+
+- **Architecture: Application-layer delegates** — Added `getSimpleDisplayInfo()`, `getEntryTotal()` to TransactionService and `getTopSpendingCategories()` to ReportService so UI calls Application layer instead of Domain directly
+- **Architecture: Layer violation fixes** — list.js, groups.js, forms.js no longer import Domain (Ledger, Reports) directly; all access goes through Application services
+- **Architecture: Infrastructure purity** — Moved `updatedAt` timestamp logic from `DB.updateAccount()` to Application layer callers (`AccountService.renameAccount/deactivateAccount/reactivateAccount`)
+- **State mutation safety** — `renameAccount`, `deactivateAccount`, `reactivateAccount` now clone account objects via `Object.assign` instead of mutating in place
+- **Backup reminder** — Changed `BACKUP_REMINDER_DAYS` from 7 to 30 to match documented specification
+- **Service Worker CDN strategy** — CDN resources (Remix Icons) now use a separate `finchronicle-cdn-v1.0.0` cache with network-first strategy to prevent stale/compromised CDN responses from persisting
+- **Error boundary** — `updateUI()` in renderer.js is now wrapped in try/catch with console.error logging
+
+---
+
 ## [1.0.0] — 2025-07-17
 
 ### Added

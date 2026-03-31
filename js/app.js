@@ -145,6 +145,16 @@
                 prompt.classList.add('show');
             }
         }
+
+        // Bind dismiss button (no inline handler)
+        const dismissBtn = document.getElementById('dismissInstallPrompt');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', function () {
+                SettingsService().hideInstallPrompt();
+                var el = document.getElementById('installPrompt');
+                if (el) el.style.display = 'none';
+            });
+        }
     }
 
     // Start the app when DOM is ready
