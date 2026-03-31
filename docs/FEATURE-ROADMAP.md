@@ -11,7 +11,7 @@
 **Date:** 2026-03-31
 **Evidence-based priorities:**
 
-- **Recurring Transactions** (P0, v1.2.0) — Gap #1: Missing in FinChronicleLedger
+- ~~**Recurring Transactions** (P0, v1.2.0) — Gap #1: Missing in FinChronicleLedger~~ ✅
 - **Budget Planning** (P0, v1.2.0) — Gap #2: Missing in FinChronicleLedger
 - **Search** (P0, v1.2.0) — Gap #3a: Full-text search (separated from Tags — different tools)
 - **Tags & Custom Categories** (P1, v1.2.0) — Gap #3b: Multi-dimensional tagging
@@ -1383,7 +1383,7 @@ View all accounts at once, consolidated balance sheet, inter-account transfers v
 ## Implementation Priority
 
 ### v1.2.0 (Q2 2026)
-- Recurring Transactions (P0)
+- ~~Recurring Transactions (P0) — auto-create + reminder modes, backfill engine~~ ✅ Implemented
 - Budget Planning & Tracking (P0)
 - ~~Split Transactions (P0) — UI only, no schema change~~ ✅ Implemented
 - ~~Search / Full-Text (P0) — no new store~~ ✅ Implemented
