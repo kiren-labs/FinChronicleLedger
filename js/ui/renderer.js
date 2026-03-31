@@ -7,6 +7,8 @@
 
     const State = () => global.FCL.State;
     const Settings = () => global.FCL.SettingsService;
+    const T = () => global.FCL.Types;
+    const V = () => global.FCL.Validators;
 
     /**
      * Master UI refresh — called on every state change.
@@ -100,7 +102,7 @@
         toast.className = 'toast toast--' + type + ' toast--visible';
 
         clearTimeout(toast._timer);
-        var duration = action ? 8000 : 2500;
+        const duration = action ? T().TOAST_DURATION_LONG : T().TOAST_DURATION_SHORT;
         toast._timer = setTimeout(() => {
             toast.classList.remove('toast--visible');
         }, duration);
@@ -127,8 +129,7 @@
      */
     function formatDate(dateStr) {
         const [y, m, d] = dateStr.split('-');
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
+        return `${parseInt(d)} ${T().MONTHS_SHORT[parseInt(m) - 1]} ${y}`;
     }
 
     /**
@@ -138,24 +139,27 @@
      */
     function formatMonth(monthStr) {
         const [y, m] = monthStr.split('-');
-        const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-        return `${months[parseInt(m) - 1]} ${y}`;
+        return `${T().MONTHS_LONG[parseInt(m) - 1]} ${y}`;
     }
 
     /**
      * Escape a string for safe insertion into HTML via innerHTML.
+     * Delegates to Validators.sanitizeHTML — single implementation, no duplication.
      * Use this for ALL user-supplied content rendered in templates.
      * @param {string} str
      * @returns {string}
      */
     function escapeHTML(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        return V().sanitizeHTML(str);
+    }
+
+    /**
+     * Apply theme to the document.
+     * Moved here from SettingsService — DOM access belongs in the UI layer.
+     * @param {string} mode - 'enabled' | 'disabled'
+     */
+    function applyTheme(mode) {
+        document.documentElement.setAttribute('data-theme', mode === 'enabled' ? 'dark' : 'light');
     }
 
     // =====================================================================
@@ -172,6 +176,7 @@
         formatDate,
         formatMonth,
         escapeHTML,
+        applyTheme,
     };
 
 })(window);

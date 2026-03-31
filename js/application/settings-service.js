@@ -8,6 +8,7 @@
     const DB = () => global.FCL.DB;
     const Types = () => global.FCL.Types;
     const State = () => global.FCL.State;
+    const R = () => global.FCL.UI.Renderer;
 
     // =====================================================================
     // Theme
@@ -28,10 +29,11 @@
 
     /**
      * Apply theme to the document.
+     * Delegates to UI Renderer — DOM access belongs in the UI layer.
      * @param {string} mode - 'enabled' or 'disabled'
      */
     function applyTheme(mode) {
-        document.documentElement.setAttribute('data-theme', mode === 'enabled' ? 'dark' : 'light');
+        R().applyTheme(mode);
     }
 
     // =====================================================================
