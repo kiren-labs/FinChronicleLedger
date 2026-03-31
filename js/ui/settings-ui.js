@@ -229,25 +229,47 @@
         const fileInput = document.getElementById('restore-file-input');
         if (restoreBtn && fileInput) {
             restoreBtn.addEventListener('click', () => {
-                Modals().showRestoreConfirm(() => fileInput.click());
+                Modals().showRestoreConfirm((strategy) => {
+                    fileInput.dataset.strategy = strategy;
+                    fileInput.click();
+                });
             });
 
             fileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
+                const strategy = fileInput.dataset.strategy || 'replace';
 
                 try {
-                    // Create pre-restore backup first
-                    await ImportExport().createFullBackup();
-
                     const text = await FileIO().readFile(file);
-                    const result = await ImportExport().restoreFromBackup(text);
 
-                    if (result.success) {
-                        R().showToast(`Restored: ${result.stats.entries} entries, ${result.stats.accounts} accounts`, 'success');
-                        R().updateUI();
+                    if (strategy === 'merge') {
+                        var preview = ImportExport().previewMerge(text);
+                        if (!preview.success) {
+                            R().showToast(preview.errors[0] || 'Invalid backup', 'error');
+                            fileInput.value = '';
+                            return;
+                        }
+                        Modals().showMergePreview(preview.preview, async function () {
+                            var result = await ImportExport().mergeFromBackup(text);
+                            if (result.success) {
+                                var msg = result.stats.newEntries + ' entries added, ' + result.stats.duplicatesSkipped + ' duplicates skipped';
+                                R().showToast(msg, 'success');
+                                R().updateUI();
+                            } else {
+                                R().showToast(result.errors[0] || 'Merge failed', 'error');
+                            }
+                        });
                     } else {
-                        R().showToast(result.errors[0] || 'Restore failed', 'error');
+                        // Replace-all: create pre-restore backup first
+                        await ImportExport().createFullBackup();
+                        const result = await ImportExport().restoreFromBackup(text);
+                        if (result.success) {
+                            R().showToast(`Restored: ${result.stats.entries} entries, ${result.stats.accounts} accounts`, 'success');
+                            R().updateUI();
+                        } else {
+                            R().showToast(result.errors[0] || 'Restore failed', 'error');
+                        }
                     }
                 } catch (err) {
                     R().showToast('Restore failed: ' + err.message, 'error');
