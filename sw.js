@@ -6,8 +6,8 @@
  * falls back to network, and cleans old caches on activate.
  */
 
-const CACHE_NAME = 'finchronicle-ledger-v1.1.0';
-const CDN_CACHE_NAME = 'finchronicle-cdn-v1.1.0';
+const CACHE_NAME = 'finchronicle-ledger-v1.2.0';
+const CDN_CACHE_NAME = 'finchronicle-cdn-v1.2.0';
 const CDN_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const CACHED_URLS = [
