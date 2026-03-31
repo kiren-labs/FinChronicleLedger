@@ -27,6 +27,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate version consistency
+        run: |
+          # Source of truth: js/domain/types.js APP_VERSION
+          VERSION=$(grep "APP_VERSION" js/domain/types.js | grep -oE "'[0-9]+\.[0-9]+\.[0-9]+'" | tr -d "'")
+          if [ -z "$VERSION" ]; then
+            echo "❌ Could not read APP_VERSION from js/domain/types.js"
+            exit 1
+          fi
+          echo "Version (types.js): $VERSION"
+
+          # Check sw.js CACHE_NAME
+          SW_VERSION=$(grep "CACHE_NAME" sw.js | grep -oE "v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | tr -d 'v')
+          if [ "$SW_VERSION" != "$VERSION" ]; then
+            echo "❌ sw.js CACHE_NAME is v$SW_VERSION but types.js is $VERSION"
+            echo "   Run: ./scripts/bump-version.sh $VERSION"
+            exit 1
+          fi
+          echo "✓ sw.js: $SW_VERSION"
+
+          # Check README.md badge
+          README_VERSION=$(grep "version-" README.md | grep -oE "version-[0-9]+\.[0-9]+\.[0-9]+" | head -1 | sed 's/version-//')
+          if [ "$README_VERSION" != "$VERSION" ]; then
+            echo "❌ README.md badge is $README_VERSION but types.js is $VERSION"
+            echo "   Run: ./scripts/bump-version.sh $VERSION"
+            exit 1
+          fi
+          echo "✓ README.md: $README_VERSION"
+
+          echo "✅ All version references consistent: $VERSION"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
