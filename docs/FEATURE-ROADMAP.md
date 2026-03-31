@@ -61,11 +61,11 @@ All features maintain the app's core principles:
 | 2 | Budget Planning & Tracking | P0 | Medium | High | v1.2.0 | ✅ Implemented — per-category limits, progress bars, alerts |
 | 3 | Split Transactions | P0 | Low | High | v1.2.0 | ✅ Implemented — UI-only; no schema change |
 | 4 | Search (Full-Text) | P0 | Low | High | v1.2.0 | ✅ Implemented — Gap #3a; no new store |
-| 5 | Tags & Custom Categories | P1 | Low | Medium | v1.2.0 | Gap #3b |
+| 5 | Tags & Custom Categories | P1 | Low | Medium | v1.2.0 | ✅ Implemented — tag CRUD, color picker, form tag chips, list badges, tag filter |
 | 6 | Undo / Delete Recovery | P1 | Low | High | v1.2.0 | ✅ Implemented — 8-second undo window, optimistic UI |
 | 7 | Account Management UI | P1 | Low | Medium | v1.2.0 | ✅ Implemented — CRUD, deactivate, Advanced Mode |
-| 4-A | CSV Import (Simple Transactions) | P1 | Low | Medium | v1.2.0 | Gap #5 |
-| 4-B | Merge Restore (Non-destructive) | P1 | Medium | Medium | v1.2.0 | Gap #6 |
+| 4-A | CSV Import (Simple Transactions) | P1 | Low | Medium | v1.2.0 | ✅ Implemented — CSV parse, preview, validate, import pipeline |
+| 4-B | Merge Restore (Non-destructive) | P1 | Medium | Medium | v1.2.0 | ✅ Implemented — merge/replace strategy, preview, ID-based dedup |
 | 4-C | Backup Status & Reminders UX | P1 | Low | Medium | v1.2.0 | ✅ Implemented — Gap #7 |
 | 8 | Payee Management | P1 | Low | Medium | v1.3.0 | Prerequisite for Reconciliation |
 | 9 | Transaction Reconciliation | P1 | High | High | v1.3.0 | Requires Payee Management (#8) |
