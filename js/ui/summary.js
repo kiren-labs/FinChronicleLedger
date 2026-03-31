@@ -9,6 +9,9 @@
     const ReportService = () => global.FCL.ReportService;
     const Settings = () => global.FCL.SettingsService;
     const RecurringService = () => global.FCL.RecurringService;
+    const BudgetService = () => global.FCL.BudgetService;
+    const AccountService = () => global.FCL.AccountService;
+    const BudgetDomain = () => global.FCL.Budget;
     const R = () => global.FCL.UI.Renderer;
 
     // =====================================================================
@@ -71,6 +74,7 @@
                         Expense-to-Income: <strong>${insights.expensePercentage}%</strong>
                     </div>` : ''}
                     ${mode === 'advanced' ? _renderNetWorth() : ''}
+                    ${_renderBudgetWidget()}
                     ${_renderRecurringWidget()}
                 </div>
             </div>
