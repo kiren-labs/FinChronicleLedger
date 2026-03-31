@@ -10,6 +10,7 @@
     const AccountService = () => global.FCL.AccountService;
     const TransactionService = () => global.FCL.TransactionService;
     const ReportService = () => global.FCL.ReportService;
+    const SearchService = () => global.FCL.SearchService;
     const R = () => global.FCL.UI.Renderer;
 
     const ITEMS_PER_PAGE = 20;
@@ -33,6 +34,8 @@
 
         const months = ReportService().getAvailableMonths();
         const currentMonth = State().getCurrentMonth();
+        const searchQuery = State().getSearchQuery();
+        const searching = SearchService().isSearchActive();
 
         let monthButtons = months.map(m => {
             const active = m === currentMonth ? 'filter-btn--active' : '';
@@ -44,18 +47,52 @@
         }
 
         container.innerHTML = `
+            <div class="search-bar">
+                <div class="search-input-wrapper">
+                    <i class="ri-search-line search-icon"></i>
+                    <input type="search" id="searchInput" class="search-input" placeholder="Search transactions..." value="${R().escapeHTML(searchQuery)}" autocomplete="off" aria-label="Search transactions">
+                    ${searching ? '<button class="search-clear-btn" id="searchClear" aria-label="Clear search"><i class="ri-close-line"></i></button>' : ''}
+                </div>
+                ${searching ? '<div class="search-status">Searching across all months</div>' : ''}
+            </div>
             <div class="filters">
-                <div class="filter-months">${monthButtons}</div>
+                <div class="filter-months"${searching ? ' style="opacity:0.5;pointer-events:none"' : ''}>${monthButtons}</div>
             </div>
         `;
 
-        // Bind month filter clicks
-        container.querySelectorAll('.filter-btn[data-month]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                State().setCurrentMonth(btn.dataset.month);
-                State().setCurrentPage(1);
+        // Bind search input
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            let debounceTimer;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    State().setSearchQuery(searchInput.value);
+                }, 250);
             });
-        });
+            // Preserve focus after re-render
+            if (document.activeElement && document.activeElement.id === 'searchInput') {
+                searchInput.focus();
+            }
+        }
+
+        // Bind clear button
+        const clearBtn = document.getElementById('searchClear');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                State().setSearchQuery('');
+            });
+        }
+
+        // Bind month filter clicks (disabled when searching)
+        if (!searching) {
+            container.querySelectorAll('.filter-btn[data-month]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    State().setCurrentMonth(btn.dataset.month);
+                    State().setCurrentPage(1);
+                });
+            });
+        }
     }
 
     // =====================================================================
@@ -68,20 +105,34 @@
 
         const month = State().getCurrentMonth();
         const page = State().getCurrentPage();
-        let entries = State().getEntries()
-            .filter(e => e.date.startsWith(month))
-            .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+        const searchQuery = State().getSearchQuery();
+        const searching = SearchService().isSearchActive();
 
-        // Category filter
-        const catFilter = State().getCurrentCategory();
-        if (catFilter) {
-            entries = entries.filter(e => {
-                for (const line of e.lines) {
-                    const acc = AccountService().getAccountById(line.accountId);
-                    if (acc && acc.name === catFilter) return true;
-                }
-                return false;
-            });
+        // When searching, search across ALL entries (all months)
+        // When not searching, filter by current month
+        let entries = State().getEntries();
+        if (!searching) {
+            entries = entries.filter(e => e.date.startsWith(month));
+        }
+        entries = entries.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+
+        // Category filter (only when not searching)
+        if (!searching) {
+            const catFilter = State().getCurrentCategory();
+            if (catFilter) {
+                entries = entries.filter(e => {
+                    for (const line of e.lines) {
+                        const acc = AccountService().getAccountById(line.accountId);
+                        if (acc && acc.name === catFilter) return true;
+                    }
+                    return false;
+                });
+            }
+        }
+
+        // Apply search filter
+        if (searching) {
+            entries = SearchService().search(searchQuery, entries);
         }
 
         // Pagination
@@ -90,7 +141,11 @@
         const pageEntries = entries.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
         if (pageEntries.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No transactions this month.</p></div>';
+            if (searching) {
+                container.innerHTML = '<div class="empty-state"><p>No transactions match "<strong>' + R().escapeHTML(searchQuery) + '</strong>"</p></div>';
+            } else {
+                container.innerHTML = '<div class="empty-state"><p>No transactions this month.</p></div>';
+            }
             return;
         }
 
