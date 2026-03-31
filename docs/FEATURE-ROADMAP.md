@@ -2,7 +2,7 @@
 
 **Perspective:** Accountant & Personal Finance Manager
 **Date:** 2026-03-03 (Updated 2026-03-31 — gap analysis + architecture review + implementation tracking)
-**Version:** 1.1.0 → Future Releases
+**Version:** 1.2.0 → Future Releases
 
 ---
 

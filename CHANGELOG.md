@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] — 2026-03-31
+
+### Added
+
+#### Full-Text Search (P0)
+- **Search bar** on the List tab with debounced input (250ms) and clear button
+- Search across all months — month filter is automatically bypassed during active search
+- Matches transaction descriptions, line memos, account names, exact amounts, and entry types
+- Result count displayed (e.g., "3 results for 'dentist'")
+- Cursor position preserved across re-renders for seamless typing
+- New `SearchService` in Application layer (`js/application/search-service.js`)
+- Transient `_searchQuery` state in `State` — session-scoped, not persisted
+- No new IndexedDB store — pure in-memory filtering over existing entries
+
+#### Split Transactions (P0)
+- **"Split this transaction"** button in Simple Mode form for expenses and income
+- Dynamic split lines UI — add/remove category+amount rows (minimum 2)
+- Real-time running total display as amounts are entered
+- `[Split]` badge on split entries in the transaction list with per-category breakdown
+- New domain helpers: `isSplitEntry()`, `getSplitBreakdown()`, `buildSplitExpense()`, `buildSplitIncome()` in Ledger
+- New `createSplitTransaction()` in TransactionService
+- No schema change — uses existing multi-line double-entry journal entries natively
+
+### Changed
+
+- **Service Worker**: Added `search-service.js` to `CACHED_URLS` for offline availability
+- **Service Worker**: Bumped `CACHE_NAME` and `CDN_CACHE_NAME` to `v1.2.0`
+
+### Fixed
+
+- **Roadmap**: Updated Feature Overview Matrix and Implementation Priority to track completed features
+
+---
+
 ## [1.1.0] — 2026-03-01
 
 ### Security
