@@ -83,10 +83,13 @@
             .filter(Boolean)
             .sort((a, b) => a.code - b.code);
 
+        const totalDebits = Accounting().round2(rows.reduce((s, r) => s + r.debit, 0));
+        const totalCredits = Accounting().round2(rows.reduce((s, r) => s + r.credit, 0));
+
         return {
             rows,
-            totalDebits: verification.totalDebits,
-            totalCredits: verification.totalCredits,
+            totalDebits,
+            totalCredits,
             balanced: verification.balanced,
             difference: verification.difference,
         };
