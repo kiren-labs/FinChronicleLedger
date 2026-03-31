@@ -13,6 +13,7 @@
     const RecurringService = () => global.FCL.RecurringService;
     const RecurringDomain = () => global.FCL.Recurring;
     const AccountService = () => global.FCL.AccountService;
+    const BudgetService = () => global.FCL.BudgetService;
     const FileIO = () => global.FCL.FileIO;
     const R = () => global.FCL.UI.Renderer;
     const Modals = () => global.FCL.UI.Modals;
@@ -94,6 +95,15 @@
                 ${_renderRecurringList()}
                 <button class="btn btn--secondary btn--full" id="add-recurring">
                     <i class="ri-add-line"></i> Create Recurring Transaction
+                </button>
+            </div>
+
+            <!-- Monthly Budget -->
+            <div class="settings-section">
+                <h3>Monthly Budget</h3>
+                ${_renderBudgetSummary()}
+                <button class="btn btn--secondary btn--full" id="edit-budget">
+                    <i class="ri-money-dollar-circle-line"></i> ${BudgetService().getBudgetForMonth(State().getCurrentMonth()) ? 'Edit Budget' : 'Set Up Budget'}
                 </button>
             </div>
 
