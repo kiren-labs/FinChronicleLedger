@@ -2356,6 +2356,26 @@ button.primary.loading .btn-spinner {
     box-shadow: 0 var(--space-xs) var(--space-xl) rgba(0, 81, 213, 0.4);
 }
 
+/* Toast action button (e.g. Undo) */
+.toast-action-btn {
+    background: transparent;
+    color: inherit;
+    border: 2px solid currentColor;
+    border-radius: var(--radius-md);
+    padding: var(--space-xs) var(--space-sm);
+    margin-left: var(--space-md);
+    font-size: var(--font-sm);
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.toast-action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 /* --- Summary Section (JS structure override) ---
    JS generates: .summary > .summary-header + .summary-body > .summary-tiles > .tile
    CSS .summary was a grid for .summary-card; override it for the JS-generated wrapper. */

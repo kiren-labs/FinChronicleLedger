@@ -328,11 +328,8 @@
                 if (global.FCL.UI.Modals) {
                     global.FCL.UI.Modals.showDeleteConfirm(btn.dataset.id);
                 } else {
-                    // Fallback
-                    if (confirm('Delete this transaction?')) {
-                        await TransactionService().deleteTransaction(btn.dataset.id);
-                        R().showToast('Transaction deleted', 'success');
-                    }
+                    // Fallback — direct delete with undo support
+                    await TransactionService().deleteTransaction(btn.dataset.id);
                 }
             });
         });

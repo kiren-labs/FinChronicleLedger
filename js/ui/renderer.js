@@ -71,19 +71,39 @@
      * Show a toast notification.
      * @param {string} message
      * @param {'success'|'error'|'info'} [type='success']
+     * @param {Object} [action] - Optional action button {label: string, action: Function}
      */
-    function showToast(message, type) {
+    function showToast(message, type, action) {
         type = type || 'success';
         const toast = document.getElementById('toast');
         if (!toast) return;
 
-        toast.textContent = message;
+        if (action && action.label && typeof action.action === 'function') {
+            toast.innerHTML = '';
+            var textSpan = document.createElement('span');
+            textSpan.textContent = message;
+            toast.appendChild(textSpan);
+
+            var btn = document.createElement('button');
+            btn.className = 'toast-action-btn';
+            btn.textContent = action.label;
+            btn.addEventListener('click', function () {
+                action.action();
+                toast.classList.remove('toast--visible');
+                clearTimeout(toast._timer);
+            });
+            toast.appendChild(btn);
+        } else {
+            toast.textContent = message;
+        }
+
         toast.className = 'toast toast--' + type + ' toast--visible';
 
         clearTimeout(toast._timer);
+        var duration = action ? 8000 : 2500;
         toast._timer = setTimeout(() => {
             toast.classList.remove('toast--visible');
-        }, 2500);
+        }, duration);
     }
 
     /**

@@ -56,7 +56,8 @@
     function showDeleteConfirm(entryId) {
         showModal(`
             <h3>Delete Transaction</h3>
-            <p>Are you sure you want to delete this transaction? This cannot be undone.</p>
+            <p>Are you sure you want to delete this transaction?</p>
+            <p class="text-muted">You'll have 8 seconds to undo after deletion.</p>
             <div class="modal-actions">
                 <button class="btn btn--secondary" id="modal-cancel">Cancel</button>
                 <button class="btn btn--danger" id="modal-confirm-delete">Delete</button>
@@ -65,13 +66,8 @@
 
         document.getElementById('modal-cancel').addEventListener('click', closeModal);
         document.getElementById('modal-confirm-delete').addEventListener('click', async () => {
-            const result = await TransactionService().deleteTransaction(entryId);
             closeModal();
-            if (result.success) {
-                R().showToast('Transaction deleted', 'success');
-            } else {
-                R().showToast(result.errors[0] || 'Delete failed', 'error');
-            }
+            await TransactionService().deleteTransaction(entryId);
         });
     }
 
