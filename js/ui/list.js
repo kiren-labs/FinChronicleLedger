@@ -11,6 +11,7 @@
     const TransactionService = () => global.FCL.TransactionService;
     const ReportService = () => global.FCL.ReportService;
     const SearchService = () => global.FCL.SearchService;
+    const Ledger = () => global.FCL.Ledger;
     const R = () => global.FCL.UI.Renderer;
 
     const ITEMS_PER_PAGE = 20;
@@ -205,6 +206,11 @@
     // =====================================================================
 
     function _renderSimpleListItem(entry, accounts) {
+        // Check if this is a split transaction
+        if (Ledger().isSplitEntry(entry)) {
+            return _renderSplitListItem(entry, accounts);
+        }
+
         const info = TransactionService().getSimpleDisplayInfo(entry);
         let categoryName = '';
         let amountClass = '';
