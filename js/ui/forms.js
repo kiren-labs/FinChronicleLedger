@@ -430,6 +430,24 @@
 
         if (result.success) {
             R().showToast(editingId ? 'Transaction updated!' : 'Transaction added!', 'success');
+
+            // Budget alert check (on expense create/edit)
+            if (type === 'expense' && BudgetService()) {
+                var month = date.slice(0, 7);
+                var categoryCode = Types().CategoryAccountMap[category];
+                var catAcct = AccountService().getAccountByCode(categoryCode);
+                if (catAcct) {
+                    var alert = BudgetService().checkBudgetAlert(month, catAcct.id);
+                    if (alert) {
+                        var msg = alert.type === 'over'
+                            ? 'Over budget by ' + R().formatCurrency(Math.abs(alert.remaining)) + ' for this category'
+                            : 'Budget alert: ' + alert.percentageUsed + '% used for this category';
+                        var level = alert.type === 'over' ? 'error' : 'warning';
+                        setTimeout(function () { R().showToast(msg, level); }, 800);
+                    }
+                }
+            }
+
             State().setEditingEntryId(null);
             resetForm();
         } else {
