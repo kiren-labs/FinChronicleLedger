@@ -23,6 +23,7 @@
     const SettingsService = () => global.FCL.SettingsService;
     const BackupService = () => global.FCL.BackupService;
     const RecurringService = () => global.FCL.RecurringService;
+    const BudgetService = () => global.FCL.BudgetService;
     const Renderer = () => global.FCL.UI.Renderer;
     const Navigation = () => global.FCL.UI.Navigation;
     const Types = () => global.FCL.Types;
@@ -96,10 +97,14 @@
             }
             console.log('[FCL] Recurring processed: ' + recurResult.created + ' created, ' + recurResult.reminded + ' reminders');
 
-            // 13. Register Service Worker
+            // 13. Load budgets
+            await BudgetService().loadAll();
+            console.log('[FCL] Budgets loaded');
+
+            // 14. Register Service Worker
             registerServiceWorker();
 
-            // 14. Check backup reminder
+            // 15. Check backup reminder
             const backupStatus = BackupService().getBackupStatus();
             if (backupStatus.reminderDue) {
                 setTimeout(() => {
@@ -107,7 +112,7 @@
                 }, 2000);
             }
 
-            // 15. Check iOS install prompt
+            // 16. Check iOS install prompt
             checkInstallPrompt();
 
             console.log('[FCL] FinChronicleLedger v' + Types().APP_VERSION + ' ready');

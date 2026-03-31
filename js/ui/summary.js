@@ -111,6 +111,66 @@
     }
 
     // =====================================================================
+    // Budget Widget
+    // =====================================================================
+
+    function _renderBudgetWidget() {
+        if (!BudgetService()) return '';
+
+        var month = State().getCurrentMonth();
+        var status = BudgetService().getBudgetStatus(month);
+        if (!status) return '';
+
+        var html = '<div class="budget-widget">';
+        html += '<h4 class="budget-widget-title"><i class="ri-wallet-3-line"></i> Budget</h4>';
+
+        // Overall bar
+        if (status.overallBudget) {
+            var daysLeft = BudgetDomain().getDaysRemaining(month);
+            var dailyAllowance = BudgetDomain().getDailyAllowance(status.overallRemaining, month);
+            var overallCls = status.overallStatus === 'on-track' ? 'budget-on-track'
+                : status.overallStatus === 'approaching' ? 'budget-approaching'
+                : 'budget-over';
+
+            html += '<div class="budget-overall-widget ' + overallCls + '">';
+            html += '<div class="budget-overall-header">';
+            html += '<span>' + R().formatCurrency(status.totalSpent) + ' / ' + R().formatCurrency(status.overallBudget) + '</span>';
+            html += '<span>' + status.overallPercentage + '%</span>';
+            html += '</div>';
+            html += '<div class="budget-bar"><div class="budget-bar-fill" style="width:' + Math.min(status.overallPercentage, 100) + '%"></div></div>';
+            html += '<div class="budget-overall-meta">';
+            html += '<span>' + R().formatCurrency(Math.max(0, status.overallRemaining)) + ' remaining</span>';
+            html += '<span>' + daysLeft + ' days left &middot; ' + R().formatCurrency(dailyAllowance) + '/day</span>';
+            html += '</div>';
+            html += '</div>';
+        }
+
+        // Top categories (show only approaching or over, max 3)
+        var alerts = status.categoryBudgets.filter(function (cb) {
+            return cb.status !== 'on-track';
+        }).slice(0, 3);
+
+        if (alerts.length > 0) {
+            html += '<div class="budget-alerts">';
+            for (var i = 0; i < alerts.length; i++) {
+                var cb = alerts[i];
+                var acc = AccountService().getAccountById(cb.categoryAccountId);
+                var name = acc ? R().escapeHTML(acc.name) : 'Unknown';
+                var cls = cb.status === 'approaching' ? 'budget-approaching' : 'budget-over';
+                html += '<div class="budget-alert-item ' + cls + '">';
+                html += '<span class="budget-alert-name">' + name + '</span>';
+                html += '<span class="budget-alert-pct">' + cb.percentageUsed + '%</span>';
+                html += '<div class="budget-bar budget-bar-sm"><div class="budget-bar-fill" style="width:' + Math.min(cb.percentageUsed, 100) + '%"></div></div>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // =====================================================================
     // Recurring Widget
     // =====================================================================
 

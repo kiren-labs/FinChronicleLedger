@@ -10,6 +10,7 @@
     const Settings = () => global.FCL.SettingsService;
     const AccountService = () => global.FCL.AccountService;
     const TransactionService = () => global.FCL.TransactionService;
+    const BudgetService = () => global.FCL.BudgetService;
     const R = () => global.FCL.UI.Renderer;
 
     let _advancedLines = 2; // Number of journal lines in advanced editor
