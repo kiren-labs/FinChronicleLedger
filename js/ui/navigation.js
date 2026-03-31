@@ -16,6 +16,7 @@
 
     function init() {
         _bindNavEvents();
+        _bindFAB();
         switchTab('add');
     }
 
@@ -40,6 +41,10 @@
             btn.classList.toggle('active', btn.dataset.tab === tabName);
         });
 
+        // Show FAB on all tabs except Add
+        const fab = document.getElementById('fab-add');
+        if (fab) fab.style.display = tabName === 'add' ? 'none' : '';
+
         // Trigger re-render for the active tab
         R().updateUI();
     }
@@ -59,6 +64,13 @@
                 switchTab(btn.dataset.tab);
             });
         });
+    }
+
+    function _bindFAB() {
+        const fab = document.getElementById('fab-add');
+        if (fab) {
+            fab.addEventListener('click', () => switchTab('add'));
+        }
     }
 
     // =====================================================================

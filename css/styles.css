@@ -424,6 +424,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 input[type="number"] {
     -moz-appearance: textfield;
+    appearance: textfield;
     font-family: var(--font-family-mono);
 }
 
@@ -783,6 +784,7 @@ button.primary.loading .btn-spinner {
         white-space: normal;
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
@@ -4581,4 +4583,112 @@ details.faq-item p {
     display: flex;
     gap: var(--space-sm);
     margin: var(--space-md) 0;
+}
+
+/* ==========================================================================
+   UI/UX Improvements — Phase C
+   ========================================================================== */
+
+/* --- #6: Tap-to-expand Edit/Delete actions --- */
+
+.transaction-list .transaction-item {
+    cursor: pointer;
+}
+
+.transaction-list .transaction-item .transaction-actions {
+    display: none;
+    margin-top: var(--space-sm);
+    margin-left: 0;
+}
+
+.transaction-list .transaction-item.transaction-item--expanded .transaction-actions {
+    display: flex;
+}
+
+.transaction-list .transaction-item.transaction-item--expanded {
+    background: var(--color-bg);
+}
+
+/* --- #7: Month filter scroll hint (mask fade at right edge) --- */
+
+.filter-months-scroll {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.filter-months {
+    display: flex;
+    gap: var(--space-sm);
+    overflow-x: auto;
+    padding: var(--space-2xs) 0;
+    padding-right: var(--space-2xl);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    mask-image: linear-gradient(to right, black 80%, transparent 100%);
+}
+
+.filter-months::-webkit-scrollbar {
+    display: none;
+}
+
+/* Remove old overflow from .filters now that .filter-months handles its own scroll */
+.filters {
+    overflow-x: visible;
+}
+
+/* --- #8: Type colour dot in list row header --- */
+
+.type-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: var(--space-2xs);
+    flex-shrink: 0;
+}
+
+.type-dot--income   { background: var(--color-success-strong); }
+.type-dot--expense  { background: var(--color-danger-strong); }
+.type-dot--transfer { background: var(--color-primary); }
+.type-dot--opening  { background: var(--color-text-muted); }
+
+/* --- #9: Floating Action Button (+) --- */
+
+.fab {
+    position: fixed;
+    bottom: calc(72px + var(--space-xl));
+    right: var(--space-xl);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    cursor: pointer;
+    font-size: var(--font-3xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg, 0 4px 16px rgba(0, 81, 213, 0.35));
+    z-index: 900;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 81, 213, 0.45);
+}
+
+.fab:active {
+    transform: scale(0.93);
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .fab {
+        bottom: calc(72px + var(--space-xl) + env(safe-area-inset-bottom));
+    }
 }
